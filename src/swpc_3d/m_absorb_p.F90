@@ -182,10 +182,10 @@ contains
     !!
     if( pw_mode ) then
       if( idx == 0 ) then
-        !$omp parallel private(j,k)
-        !$omp do schedule(dynamic)
-        do j=jbeg, jend
-          do k=kbeg_a(1,j), kend
+        !!$omp parallel private(j,k)
+        !!$omp do schedule(dynamic)
+        do concurrent(j=jbeg: jend)
+          do concurrent(k=kbeg_a(1,j): kend)
             Sxx(k,0,j) = 2 * Sxx(k,1,j) - Sxx(k,2,j)
             Syy(k,0,j) = 2 * Syy(k,1,j) - Syy(k,2,j)
             Szz(k,0,j) = 2 * Szz(k,1,j) - Szz(k,2,j)
@@ -194,15 +194,15 @@ contains
             Sxy(k,0,j) = 2 * Sxy(k,1,j) - Sxy(k,2,j)
           end do
         end do
-        !$omp end do nowait
-        !$omp end parallel
+        !!$omp end do nowait
+        !!$omp end parallel
       end if
 
       if( idx == nproc_x -1 ) then
-        !$omp parallel private(j,k)
-        !$omp do schedule(dynamic)
-        do j=jbeg, jend
-          do k=kbeg_a(nx,j), kend
+        !!$omp parallel private(j,k)
+        !!$omp do schedule(dynamic)
+        do concurrent(j=jbeg:jend)
+          do concurrent(k=kbeg: kend)
             Sxx(k,nx+1,j) = 2 * Sxx(k,nx,j) - Sxx(k,nx-1,j)
             Syy(k,nx+1,j) = 2 * Syy(k,nx,j) - Syy(k,nx-1,j)
             Szz(k,nx+1,j) = 2 * Szz(k,nx,j) - Szz(k,nx-1,j)
@@ -211,15 +211,15 @@ contains
             Sxy(k,nx+1,j) = 2 * Sxy(k,nx,j) - Sxy(k,nx-1,j)
           end do
         end do
-        !$omp end do nowait
-        !$omp end parallel
+        !!$omp end do nowait
+        !!$omp end parallel
       end if
 
       if( idy == 0 ) then
-        !$omp parallel private(i,k)
-        !$omp do schedule(dynamic)
-        do i=ibeg, iend
-          do k=kbeg_a(i,1), kend
+        !!$omp parallel private(i,k)
+        !!$omp do schedule(dynamic)
+        do concurrent(i=ibeg: iend)
+          do concurrent(k=kbeg_a(i,1): kend)
             Sxx(k,i,0) = 2 * Sxx(k,i,1) - Sxx(k,i,2)
             Syy(k,i,0) = 2 * Syy(k,i,1) - Syy(k,i,2)
             Szz(k,i,0) = 2 * Szz(k,i,1) - Szz(k,i,2)
@@ -228,15 +228,15 @@ contains
             Sxy(k,i,0) = 2 * Sxy(k,i,1) - Sxy(k,i,2)
           end do
         end do
-        !$omp end do nowait
-        !$omp end parallel
+        !!$omp end do nowait
+        !!$omp end parallel
       end if
 
       if( idy == nproc_y -1 ) then
-        !$omp parallel private(i,k)
-        !$omp do schedule(dynamic)
-        do i=ibeg, iend
-          do k=kbeg_a(i,ny), kend
+        !!$omp parallel private(i,k)
+        !!$omp do schedule(dynamic)
+        do concurrent(i=ibeg: iend)
+          do concurrent(k=kbeg_a(i,ny): kend)
             Sxx(k,i,ny+1) = 2 * Sxx(k,i,ny) - Sxx(k,i,ny-1)
             Syy(k,i,ny+1) = 2 * Syy(k,i,ny) - Syy(k,i,ny-1)
             Szz(k,i,ny+1) = 2 * Szz(k,i,ny) - Szz(k,i,ny-1)
@@ -245,8 +245,8 @@ contains
             Sxy(k,i,ny+1) = 2 * Sxy(k,i,ny) - Sxy(k,i,ny-1)
           end do
         end do
-        !$omp end do nowait
-        !$omp end parallel
+        !!$omp end do nowait
+        !!$omp end parallel
       end if
       !$omp barrier
     end if
@@ -255,18 +255,18 @@ contains
     !! time-marching
     !!
 
-    !$omp parallel &
-    !$omp private( dxSxx, dySyy, dzSzz, dySyz, dzSyz, dxSxz, dzSxz, dxSxy ,dySxy ) &
-    !$omp private( gxc0, gxe0, gyc0, gye0, gzc0, gze0 ) &
-    !$omp private( i, j, k )
-    !$omp do &
-    !$omp schedule(dynamic)
-    do j=jbeg, jend
+    !!$omp parallel &
+    !!$omp private( dxSxx, dySyy, dzSzz, dySyz, dzSyz, dxSxz, dzSxz, dxSxy ,dySxy ) &
+    !!$omp private( gxc0, gxe0, gyc0, gye0, gzc0, gze0 ) &
+    !!$omp private( i, j, k )
+    !!$omp do &
+    !!$omp schedule(dynamic)
+    do concurrent(j=jbeg:jend)
 
       gyc0(1:4) = gyc(1:4,j)
       gye0(1:4) = gye(1:4,j)
 
-      do i=ibeg, iend
+      do concurrent(i=ibeg: iend)
 
         gxc0(1:4) = gxc(1:4,i)
         gxe0(1:4) = gxe(1:4,i)
@@ -274,7 +274,7 @@ contains
         !!
         !! Derivatives
         !!
-        do k=kbeg_a(i,j), kend
+        do concurrent(k=kbeg_a(i,j): kend)
 
           dxSxx(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r20x
           dySyy(k) = (  Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )  ) * r20y
@@ -292,7 +292,7 @@ contains
         !!
         !! update velocity
         !!
-        do k=kbeg_a(i,j), kend
+        do concurrent(k=kbeg_a(i,j): kend)
 
           gzc0(1:4) = gzc(1:4,k)
           gze0(1:4) = gze(1:4,k)
@@ -332,9 +332,9 @@ contains
         end do
       end do
     end do
-    !$omp end do nowait
-    !$omp end parallel
-    
+    !!$omp end do nowait
+    !!$omp end parallel
+
     !$omp barrier
 
   end subroutine absorb_p__update_vel
@@ -356,61 +356,62 @@ contains
     !!
     !! Horizontal zero-derivative boundary (for plane wave mode)
     !!
+
     if( pw_mode ) then
       if( idx == 0 ) then
-        !$omp parallel private(j,k)
-        !$omp do schedule(dynamic)
-        do j=jbeg, jend
-          do k=kbeg_a(1,j), kend
+        !!$omp parallel private(j,k)
+        !!$omp do schedule(dynamic)
+        do concurrent(j=jbeg: jend)
+          do concurrent(k=kbeg_a(1,j): kend)
             Vx(k,0,j) = 2* Vx(k,1,j)-Vx(k,2,j)
             Vy(k,0,j) = 2* Vy(k,1,j)-Vy(k,2,j)
             Vz(k,0,j) = 2* Vz(k,1,j)-Vz(k,2,j)
           end do
         end do
-        !$omp end do nowait
-        !$omp end parallel
+        !!$omp end do nowait
+        !!$omp end parallel
       end if
 
       if( idx == nproc_x -1 ) then
-        !$omp parallel private(j,k)
-        !$omp do schedule(dynamic)
-        do j=jbeg, jend
-          do k=kbeg_a(nx,j), kend
+        !!$omp parallel private(j,k)
+        !!$omp do schedule(dynamic)
+        do concurrent(j=jbeg: jend)
+          do concurrent(k=kbeg_a(nx,j): kend)
             Vx(k,nx+1,j) = 2 * Vx(k,nx,j) - Vx(k,nx-1,j)
             Vy(k,nx+1,j) = 2 * Vy(k,nx,j) - Vy(k,nx-1,j)
             Vz(k,nx+1,j) = 2 * Vz(k,nx,j) - Vz(k,nx-1,j)
           end do
         end do
-        !$omp end do nowait
-        !$omp end parallel
+        !!$omp end do nowait
+        !!$omp end parallel
       end if
 
       if( idy == 0 ) then
-        !$omp parallel private(i,k)
-        !$omp do schedule(dynamic)
-        do i=ibeg, iend
-          do k=kbeg_a(i,1), kend
+        !!$omp parallel private(i,k)
+        !!$omp do schedule(dynamic)
+        do concurrent(i=ibeg: iend)
+          do concurrent(k=kbeg_a(i,1): kend)
             Vx(k,i,0) = 2 * Vx(k,i,1) - Vx(k,i,2)
             Vy(k,i,0) = 2 * Vy(k,i,1) - Vy(k,i,2)
             Vz(k,i,0) = 2 * Vz(k,i,1) - Vz(k,i,2)
           end do
         end do
-        !$omp end do nowait
-        !$omp end parallel
+        !!$omp end do nowait
+        !!$omp end parallel
       end if
 
       if( idy == nproc_y -1 ) then
-        !$omp parallel private(i,k)
-        !$omp do schedule(dynamic)
-        do i=ibeg, iend
-          do k=kbeg_a(i,ny), kend
+        !!$omp parallel private(i,k)
+        !!$omp do schedule(dynamic)
+        do concurrent(i=ibeg: iend)
+          do concurrent(k=kbeg_a(i,ny): kend)
             Vx(k,i,ny+1) = 2 * Vx(k,i,ny) - Vx(k,i,ny-1)
             Vy(k,i,ny+1) = 2 * Vy(k,i,ny) - Vy(k,i,ny-1)
             Vz(k,i,ny+1) = 2 * Vz(k,i,ny) - Vz(k,i,ny-1)
           end do
         end do
-        !$omp end do nowait
-        !$omp end parallel
+        !!$omp end do nowait
+        !!$omp end parallel
       end if
 
       !$omp barrier
@@ -421,20 +422,20 @@ contains
     !! Time-marching
     !!
 
-    !$omp parallel &
-    !$omp private( gxc0, gxe0, gyc0, gye0, gzc0, gze0 ) &
-    !$omp private( dxVx, dxVy, dxVz, dyVx, dyVy, dyVz, dzVx, dzVy, dzVz ) &
-    !$omp private( lam2mu_R, lam_R ) &
-    !$omp private( dxVx_ade, dyVy_ade, dzVz_ade ) &
-    !$omp private( i, j, k )
-    !$omp do &
-    !$omp schedule(dynamic)
-    do j=jbeg, jend
+    !!$omp parallel &
+    !!$omp private( gxc0, gxe0, gyc0, gye0, gzc0, gze0 ) &
+    !!$omp private( dxVx, dxVy, dxVz, dyVx, dyVy, dyVz, dzVx, dzVy, dzVz ) &
+    !!$omp private( lam2mu_R, lam_R ) &
+    !!$omp private( dxVx_ade, dyVy_ade, dzVz_ade ) &
+    !!$omp private( i, j, k )
+    !!$omp do &
+    !!$omp schedule(dynamic)
+    do concurrent(j=jbeg: jend)
 
       gyc0(1:4) = gyc(1:4,j)
       gye0(1:4) = gye(1:4,j)
 
-      do i=ibeg, iend
+      do concurrent(i=ibeg: iend)
 
         gxc0(1:4) = gxc(1:4,i)
         gxe0(1:4) = gxe(1:4,i)
@@ -442,7 +443,7 @@ contains
         !!
         !! Derivatives
         !!
-        do k=kbeg_a(i,j), kend
+        do concurrent(k=kbeg_a(i,j): kend)
 
           dxVx(k) = (  Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )  ) * r20x
           dxVy(k) = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r20x
@@ -459,7 +460,7 @@ contains
         !!
         !! Update Normal Stress
         !!
-        do k=kbeg_a(i,j), kend
+        do concurrent(k=kbeg_a(i,j): kend)
 
           gzc0(1:4) = gzc(1:4,k)
 
@@ -494,7 +495,7 @@ contains
         !!
         !! Update Shear Stress
         !!
-        do k=kbeg_a(i,j), kend
+        do concurrent(k=kbeg_a(i,j): kend)
 
           gze0(1:4) = gze(1:4,k)
 
@@ -518,9 +519,9 @@ contains
         end do
       end do
     end do
-    !$omp end do nowait
-    !$omp end parallel
-    !$omp barrier
+    !!$omp end do nowait
+    !!$omp end parallel
+    !!$omp barrier
 
   end subroutine absorb_p__update_stress
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -567,13 +568,13 @@ contains
 
   end subroutine absorb_p__checkpoint
   !! --------------------------------------------------------------------------------------------------------------------------- !!
-  
+
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   subroutine absorb_p__restart(io)
 
     integer, intent(in) :: io
     integer :: j
-    
+
     read(io) r20x, r20y, r20z
     read(io) kbeg_min
 
@@ -615,7 +616,7 @@ contains
     do j=jbeg,jend;  read(io)  axVz(kbeg_min:kend,ibeg:iend,j); end do;
     do j=jbeg,jend;  read(io)  ayVz(kbeg_min:kend,ibeg:iend,j); end do;
     do j=jbeg,jend;  read(io)  azVz(kbeg_min:kend,ibeg:iend,j); end do;
-      
+
     do j=jbeg,jend;  read(io) axSxx(kbeg_min:kend,ibeg:iend,j); end do;
     do j=jbeg,jend;  read(io) aySxy(kbeg_min:kend,ibeg:iend,j); end do;
     do j=jbeg,jend;  read(io) azSxz(kbeg_min:kend,ibeg:iend,j); end do;
@@ -633,7 +634,7 @@ contains
   !! ADE-CFS PML damping factor according to Zhao and Shen
   !!
   subroutine damping_profile( x, H, xbeg, xend, g )
-    
+
     real(SP), intent(in) :: x   !< cartesian coordinate location
     real(SP), intent(in) :: H   !< absorption layer thickness
     real(SP), intent(in) :: xbeg

@@ -112,7 +112,7 @@ contains
         ! else
           gz_c(k) = 1.0
           gz_b(k) = 1.0
-        ! end if          
+        ! end if
       else if( k >= nz-na+1 ) then
         gz_c(k) = exp( - alpha * ( 1.0 -  (   k2z(k, Nz*real(dz), -real(dz))  + real(dz)/2  ) / Lz )**2 )
         gz_b(k) = exp( - alpha * ( 1.0 -  ( ( k2z(k, Nz*real(dz), -real(dz))              ) ) / Lz )**2 )
@@ -134,10 +134,10 @@ contains
     integer :: i, j, k
     real(SP) :: gcc
 
-    !$omp parallel do schedule(dynamic) private( i, j, k, gcc )
-    do j=jbeg, jend
-      do i=ibeg, iend
-        do k=kbeg, kend_k
+    !!$omp parallel do schedule(dynamic) private( i, j, k, gcc )
+    do concurrent(j=jbeg: jend)
+      do concurrent(i=ibeg: iend)
+        do concurrent(k=kbeg: kend_k)
 
           gcc = gx_c(i) * gy_c(j) * gz_c(k)
           Sxx(k,i,j) = Sxx(k,i,j) * gcc
@@ -151,7 +151,7 @@ contains
         end do
       end do
     end do
-    !$omp end parallel do
+    !!$omp end parallel do
 
   end subroutine absorb_c__update_stress
   !! --------------------------------------------------------------------------------------------------------------------------- !!
@@ -161,10 +161,10 @@ contains
 
     integer :: i, j, k
 
-    !$omp parallel do schedule(dynamic) private(i,j,k)
-    do j=jbeg, jend
-      do i=ibeg, iend
-        do k=kbeg, kend
+    !!$omp parallel do schedule(dynamic) private(i,j,k)
+    do concurrent(j=jbeg:jend)
+      do concurrent(i=ibeg: iend)
+        do concurrent(k=kbeg: kend)
 
           Vx(k,i,j) = Vx(k,i,j) * gx_b(i) * gy_c(j) * gz_c(k)
           Vy(k,i,j) = Vy(k,i,j) * gx_c(i) * gy_b(j) * gz_c(k)

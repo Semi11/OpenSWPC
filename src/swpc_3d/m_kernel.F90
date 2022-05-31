@@ -124,21 +124,21 @@ contains
     call pwatch__on("kernel__update_vel")
 
 
-    !$omp parallel &
-    !$omp private( d3Sx3, d3Sy3, d3Sz3 ) &
-    !$omp private( i, j, k )
-    !$omp do &
-    !$omp schedule(static,1)
-    do j=jbeg_k, jend_k
+    !!$omp parallel &
+    !!$omp private( d3Sx3, d3Sy3, d3Sz3 ) &
+    !!$omp private( i, j, k )
+    !!$omp do &
+    !!$omp schedule(static,1)
+    do concurrent(j=jbeg_k: jend_k)
 
-      do i=ibeg_k, iend_k
+      do concurrent(i=ibeg_k: iend_k)
 
         !!
         !! derivateives
         !!
 
         !! stress derivatives
-        do k=kbeg_k, kend_k
+        do concurrent(k=kbeg_k: kend_k)
           d3Sx3(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r40x  -  (  Sxx(k  ,i+2,j  ) - Sxx(k  ,i-1,j  )  ) * r41x &
                    + (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r40y  -  (  Sxy(k  ,i  ,j+1) - Sxy(k  ,i  ,j-2)  ) * r41y &
                    + (  Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )  ) * r40z  -  (  Sxz(k+1,i  ,j  ) - Sxz(k-2,i  ,j  )  ) * r41z
@@ -156,7 +156,7 @@ contains
 #ifdef _ES
         !NEC$ novector
 #endif
-        do k=kfs_top(i,j), kfs_bot(i,j)
+        do concurrent(k=kfs_top(i,j): kfs_bot(i,j))
           d3Sx3(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r20x  &
                    + (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r20y  &
                    + (  Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )  ) * r20z
@@ -174,7 +174,7 @@ contains
 #ifdef _ES
         !NEC$ novector
 #endif
-        do k=kob_top(i,j), kob_bot(i,j)
+        do concurrent(k=kob_top(i,j): kob_bot(i,j))
           d3Sx3(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r20x  &
                    + (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r20y  &
                    + (  Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )  ) * r20z
@@ -191,7 +191,7 @@ contains
         !!
         !! update velocity
         !!
-        do k=kbeg_k, kend_k
+        do concurrent(k=kbeg_k: kend_k)
 
           Vx(k,i,j) = Vx(k,i,j) + bx(k,i,j) * d3Sx3(k) * dt
           Vy(k,i,j) = Vy(k,i,j) + by(k,i,j) * d3Sy3(k) * dt
@@ -200,8 +200,8 @@ contains
         end do
       end do
     end do
-    !$omp end do nowait
-    !$omp end parallel
+    !!$omp end do nowait
+    !!$omp end parallel
 
     !$omp barrier
 
@@ -231,22 +231,22 @@ contains
 
     call pwatch__on("kernel__update_stress")
 
-    !$omp parallel  &
-    !$omp private( dxVx, dyVy, dzVz ) &
-    !$omp private( mu2, lam2mu ) &
-    !$omp private( taup1, taus1, taup_plus1, taus_plus1 ) &
-    !$omp private( d3v3, dyVy_dzVz, dxVx_dzVz, dxVx_dyVy ) &
-    !$omp private( Rxx_n, Ryy_n, Rzz_n ) &
-    !$omp private( i, j, k, m )
-    !$omp do &
-    !$omp schedule(static,1)
-    do j=jbeg_k, jend_k
-      do i=ibeg_k, iend_k
+    !!$omp parallel  &
+    !!$omp private( dxVx, dyVy, dzVz ) &
+    !!$omp private( mu2, lam2mu ) &
+    !!$omp private( taup1, taus1, taup_plus1, taus_plus1 ) &
+    !!$omp private( d3v3, dyVy_dzVz, dxVx_dzVz, dxVx_dyVy ) &
+    !!$omp private( Rxx_n, Ryy_n, Rzz_n ) &
+    !!$omp private( i, j, k, m )
+    !!$omp do &
+    !!$omp schedule(static,1)
+    do concurrent(j=jbeg_k: jend_k+0)
+      do concurrent(i=ibeg_k: iend_k)
 
         !! Derivatives
         !!
 
-        do k=kbeg_k, kend_k
+        do concurrent(k=kbeg_k: kend_k)
 
           dxVx(k) = (  Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )  ) * r40x  -  (  Vx(k  ,i+1,j  ) - Vx(k  ,i-2,j  )  ) * r41x
           dyVy(k) = (  Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)  ) * r40y  -  (  Vy(k  ,i  ,j+1) - Vy(k  ,i  ,j-2)  ) * r41y
@@ -258,7 +258,7 @@ contains
 #ifdef _ES
         !NEC$ novector
 #endif
-        do k=kfs_top(i,j), kfs_bot(i,j)
+        do concurrent(k=kfs_top(i,j): kfs_bot(i,j))
 
           dxVx(k) = (  Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )  ) * r20x
           dyVy(k) = (  Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)  ) * r20y
@@ -270,7 +270,7 @@ contains
 #ifdef _ES
         !NEC$ novector
 #endif
-        do k=kob_top(i,j), kob_bot(i,j)
+        do concurrent(k=kob_top(i,j): kob_bot(i,j))
 
           dxVx(k) = (  Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )  ) * r20x
           dyVy(k) = (  Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)  ) * r20y
@@ -286,7 +286,7 @@ contains
 #ifdef _FX
         !ocl unroll('full')
 #endif
-        do k=kbeg_k, kend_k
+        do concurrent(k=kbeg_k: kend_k)
 
           !!
           !! medium copy
@@ -312,7 +312,7 @@ contains
           Rxx_n = 0.0
           Ryy_n = 0.0
           Rzz_n = 0.0
-          do m=1, nm
+          do concurrent(m=1: nm)
             Rxx(k,i,j,m) = c1(m) * Rxx(k,i,j,m) - c2(m) * ( lam2mu * taup1 * d3v3 - mu2 * taus1 * dyVy_dzVz ) * dt
             Ryy(k,i,j,m) = c1(m) * Ryy(k,i,j,m) - c2(m) * ( lam2mu * taup1 * d3v3 - mu2 * taus1 * dxVx_dzVz ) * dt
             Rzz(k,i,j,m) = c1(m) * Rzz(k,i,j,m) - c2(m) * ( lam2mu * taup1 * d3v3 - mu2 * taus1 * dxVx_dyVy ) * dt
@@ -336,25 +336,25 @@ contains
 
       end do
     end do
-    !$omp end do nowait
-    !$omp end parallel
+    !!$omp end do nowait
+    !!$omp end parallel
 
 
-    !$omp parallel &
-    !$omp private( dxVy_dyVx, dxVz_dzVx, dyVz_dzVy ) &
-    !$omp private( mu2, taus1, taus_plus1 ) &
-    !$omp private( Ryz_n, Rxz_n, Rxy_n ) &
-    !$omp private( i, j, k, m )
-    !$omp do  &
-    !$omp schedule(static,1)
-    do j=jbeg_k, jend_k
+    !!$omp parallel &
+    !!$omp private( dxVy_dyVx, dxVz_dzVx, dyVz_dzVy ) &
+    !!$omp private( mu2, taus1, taus_plus1 ) &
+    !!$omp private( Ryz_n, Rxz_n, Rxy_n ) &
+    !!$omp private( i, j, k, m )
+    !!$omp do  &
+    !!$omp schedule(static,1)
+    do concurrent(j=jbeg_k: jend_k)
 
-      do i=ibeg_k, iend_k
+      do concurrent(i=ibeg_k: iend_k)
 
         !!
         !! Derivatives
         !!
-        do k=kbeg_k, kend_k
+        do concurrent(k=kbeg_k: kend_k)
 
           dxVy_dyVx(k) = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r40x  -  (  Vy(k  ,i+2,j  ) - Vy(k  ,i-1,j  )  ) * r41x &
                        + (  Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )  ) * r40y  -  (  Vx(k  ,i  ,j+2) - Vx(k  ,i  ,j-1)  ) * r41y
@@ -368,7 +368,7 @@ contains
 #ifdef _ES
         !NEC$ novector
 #endif
-        do k=kfs_top(i,j), kfs_bot(i,j)
+        do concurrent(k=kfs_top(i,j): kfs_bot(i,j))
 
           dxVy_dyVx(k) = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r20x  &
                        + (  Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )  ) * r20y
@@ -383,7 +383,7 @@ contains
 #ifdef _ES
         !NEC$ novector
 #endif
-        do k=kob_top(i,j), kob_bot(i,j)
+        do concurrent(k=kob_top(i,j): kob_bot(i,j))
 
           dxVy_dyVx(k) = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r20x  &
                        + (  Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )  ) * r20y
@@ -402,7 +402,7 @@ contains
 #ifdef _FX
         !ocl unroll('full')
 #endif
-        do k=kbeg_k, kend_k
+        do concurrent(k=kbeg_k: kend_k)
 
           !!
           !! medium copy
@@ -418,7 +418,8 @@ contains
           Ryz_n = 0.0
           Rxz_n = 0.0
           Rxy_n = 0.0
-          do m=1, nm
+          do concurrent(m=1: nm)
+
             Ryz(k,i,j,m) = c1(m) * Ryz(k,i,j,m) - c2(m) * muyz(k,i,j) * taus1 * dyVz_dzVy(k) * dt
             Rxz(k,i,j,m) = c1(m) * Rxz(k,i,j,m) - c2(m) * muxz(k,i,j) * taus1 * dxVz_dzVx(k) * dt
             Rxy(k,i,j,m) = c1(m) * Rxy(k,i,j,m) - c2(m) * muxy(k,i,j) * taus1 * dxVy_dyVx(k) * dt
@@ -439,8 +440,8 @@ contains
         end do
       end do
     end do
-    !$omp end do nowait
-    !$omp end parallel
+    !!$omp end do nowait
+    !!$omp end parallel
 
     !$omp barrier
 
@@ -510,10 +511,10 @@ contains
       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Ryz(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Ryz )
       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Rxz(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Rxz )
       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; write(io) Rxy(kbeg_k:kend_k,i,j,1:nm);  end do; end do; deallocate( Rxy )
-        
+
     end if
 
-    
+
   end subroutine kernel__checkpoint
   !! --------------------------------------------------------------------------------------------------------------------------- !!
 
@@ -524,16 +525,16 @@ contains
   !<
   !! --
   subroutine kernel__restart( io )
-    
+
     integer, intent(in) :: io
     integer :: i, j
     !! --
-    
-    
+
+
     call memory_allocate()
-    
+
     read(io) r40x, r40y, r40z, r41x, r41y, r41z, r20x, r20y, r20z
-    
+
     do j=jbeg_m,jend_m; read(io)  Vx(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
     do j=jbeg_m,jend_m; read(io)  Vy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
     do j=jbeg_m,jend_m; read(io)  Vz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
@@ -543,27 +544,27 @@ contains
     do j=jbeg_m,jend_m; read(io) Syz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
     do j=jbeg_m,jend_m; read(io) Sxz(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
     do j=jbeg_m,jend_m; read(io) Sxy(kbeg_m:kend_m,ibeg_m:iend_m,j); end do;
-                      
+
     if( nm > 0 ) then
       read(io) c1(1:nm)
       read(io) c2(1:nm)
       read(io) d1(1:nm)
       read(io) d2
-      
+
       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rxx(kbeg_k:kend_k,i,j,1:nm); end do; end do;
       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Ryy(kbeg_k:kend_k,i,j,1:nm); end do; end do;
       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rzz(kbeg_k:kend_k,i,j,1:nm); end do; end do;
       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Ryz(kbeg_k:kend_k,i,j,1:nm); end do; end do;
       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rxz(kbeg_k:kend_k,i,j,1:nm); end do; end do;
       do j=jbeg_k,jend_k; do i=ibeg_k,iend_k; read(io) Rxy(kbeg_k:kend_k,i,j,1:nm); end do; end do;
-        
+
     end if
-    
+
   end subroutine kernel__restart
   !! --------------------------------------------------------------------------------------------------------------------------- !!
-  
 
-  
+
+
   !! --------------------------------------------------------------------------------------------------------------------------- !!
   subroutine memory_allocate
     !!
@@ -572,14 +573,14 @@ contains
     allocate(  Vx(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
     allocate(  Vy(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
     allocate(  Vz(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-    
+
     allocate( Sxx(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
     allocate( Syy(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
     allocate( Szz(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
     allocate( Syz(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
     allocate( Sxz(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
     allocate( Sxy(       kbeg_m:kend_m, ibeg_m:iend_m, jbeg_m:jend_m ) )
-    
+
     if( nm > 0 ) then
       allocate( c1(nm), c2(nm), d1(nm) )
       allocate( Rxx( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
@@ -589,10 +590,10 @@ contains
       allocate( Rxz( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
       allocate( Rxy( kbeg_k:kend_k, ibeg_k:iend_k, jbeg_k:jend_k, 1:nm ) )
     end if
-    
+
   end subroutine memory_allocate
   !! --------------------------------------------------------------------------------------------------------------------------- !!
-  
-  
+
+
 end module m_kernel
 !! ----------------------------------------------------------------------------------------------------------------------------- !!

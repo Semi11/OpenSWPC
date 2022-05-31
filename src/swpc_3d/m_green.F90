@@ -143,7 +143,7 @@ contains
     call readini( io_prm, 'green_cmp',  green_cmp,  '' )
     call readini( io_prm, 'green_trise', green_trise, 1.0 )
     call readini( io_prm, 'green_bforce', green_bforce, .false. )
-    call readini( io_prm, 'green_maxdist', green_maxdist, 1e30 )    
+    call readini( io_prm, 'green_maxdist', green_maxdist, 1e30 )
     call assert( green_maxdist > 0.0 )
 
     M0 = 1
@@ -159,7 +159,7 @@ contains
 
     call readini( io_prm, 'ntdec_w',ntdec_w, 10 )
     call readini( io_prm, 'stftype', stftype, 'kupper' )
-    call readini( io_prm, 'wav_format', wav_format, 'sac' ) 
+    call readini( io_prm, 'wav_format', wav_format, 'sac' )
 
     if( trim(adjustl(stftype)) == 'scosine' ) stftype = 'cosine'  !! backward compatibility
 
@@ -527,7 +527,7 @@ contains
 
       itw = (it-1) / ntdec_w + 1
 
-      do i=1, ng
+      do concurrent(i=1: ng)
 
         ii = ig(i)
         jj = jg(i)
@@ -600,9 +600,9 @@ contains
             trim(title) //  '__' // trim(sh(1)%kstnm) // '__' // &
             trim(green_cmp) // '__' // trim(cmyid) // '__.wav'
 
-        call std__getio(io, is_big=.true.) 
+        call std__getio(io, is_big=.true.)
         open(io, file=trim(fn_wav), access='stream', form='unformatted', action='write', status='replace')
-        
+
         write(io) ng*ncmp, ntw, title
         write(io) sh(:)
         write(io) gf(:,:)

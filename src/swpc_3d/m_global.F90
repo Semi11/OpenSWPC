@@ -215,7 +215,7 @@ contains
       clat = 35.7182
       phi  = 0.0
       abc_type = 'pml'
-!      fullspace_mode = .false. 
+!      fullspace_mode = .false.
     else !! or read from file for regular run
       call readini( io_prm, 'dx',             dx,              0.5_MP         )
       call readini( io_prm, 'dy',             dy,              0.5_MP         )
@@ -495,13 +495,13 @@ contains
     !!
     !! packing buffer: i-direction
     !!
-    !$omp parallel do private(j,k,ptr)
-    do j=jbeg, jend
+    !!$omp parallel do private(j,k,ptr)
+    do concurrent(j=jbeg:jend)
 #ifdef _ES
       !NEC$ ivdep
       !NEC$ nosync
 #endif
-      do k=kbeg, kend
+      do concurrent(k=kbeg: kend)
         ptr = (k-kbeg)*Nsl + (j-jbeg)*Nsl*(kend-kbeg+1) + 1
 
         sbuf_ip(        ptr:        ptr+Nsl-1) = Vx(k,iend-Nsl+1:iend,j)
@@ -514,7 +514,7 @@ contains
 
       end do
     end do
-    !$omp end parallel do
+    !!$omp end parallel do
 
     !!
     !! Issue send & receive orders: i-direction
@@ -528,13 +528,13 @@ contains
     !!
     !! packing buffer: j-direction
     !!
-    !$omp parallel do private(ptr)
-    do i=ibeg,iend
+    !!$omp parallel do private(ptr)
+    do concurrent(i=ibeg:iend)
 #ifdef _ES
       !NEC$ ivdep
       !NEC$ nosync
 #endif
-      do k=kbeg,kend
+      do concurrent(k=kbeg:kend)
         ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
 
         sbuf_jp(        ptr:        ptr+Nsl-1) = Vx(k,i,jend-Nsl+1:jend)
@@ -547,7 +547,7 @@ contains
 
       end do
     end do
-    !$omp end parallel do
+    !!$omp end parallel do
 
     !!
     !! Issue send & receive orders: j-direction
@@ -564,13 +564,13 @@ contains
     !!
     !! restoring the data: i-direction
     !!
-    !$omp parallel do private(ptr,i,j,k)
-    do j=jbeg, jend
-      do k=kbeg, kend
+    !!$omp parallel do private(ptr,i,j,k)
+    do concurrent(j=jbeg:jend)
+      do concurrent(k=kbeg: kend)
 
         ptr = ( (k-kbeg) + (j-jbeg)*nz ) * Nsl + 1
 
-        do i=1,Nsl
+        do concurrent(i=1:Nsl)
           Vx(k,iend+i,j) = rbuf_ip(        ptr+i-1)
           Vy(k,iend+i,j) = rbuf_ip(  isize+ptr+i-1)
           Vz(k,iend+i,j) = rbuf_ip(2*isize+ptr+i-1)
@@ -582,7 +582,7 @@ contains
 
       end do
     end do
-    !$omp end parallel do
+    !!$omp end parallel do
 
     !! Terminate mpi data communication
     call mpi_waitall( 4, ireq2, istatus, ierr )
@@ -590,13 +590,13 @@ contains
     !!
     !! restoring the data: j-direction
     !!
-    !$omp parallel do private(ptr,i,j,k)
-    do i=ibeg,iend
-      do k=kbeg,kend
+    !!$omp parallel do private(ptr,i,j,k)
+    do concurrent(i=ibeg: iend)
+      do concurrent(k=kbeg: kend)
 
         ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
 
-        do j=1, Nsl
+        do concurrent(j=1: Nsl)
           Vx(k,i,jend+j) = rbuf_jp(ptr+j-1)
           Vy(k,i,jend+j) = rbuf_jp(jsize+ptr+j-1)
           Vz(k,i,jend+j) = rbuf_jp(2*jsize+ptr+j-1)
@@ -608,7 +608,7 @@ contains
 
       end do
     end do
-    !$omp end parallel do
+    !!$omp end parallel do
 
     call pwatch__off( "global__comm_vel" )
 
@@ -641,13 +641,13 @@ contains
     !!
     !! packing buffer: i-direction ( Sxx, Sxy, Sxz )
     !!
-    !$omp parallel do private(i,k,ptr)
-    do j=jbeg, jend
+    !!$omp parallel do private(i,k,ptr)
+    do concurrent(j=jbeg: jend)
 #ifdef _ES
       !NEC$ ivdep
       !NEC$ nosync
 #endif
-      do k=kbeg, kend
+      do concurrent(k=kbeg: kend)
         ptr = (k-kbeg)*Nsl + (j-jbeg)*Nsl*(kend-kbeg+1) + 1
 
         sbuf_ip(        ptr:        ptr+Nsl-1) = Sxx(k,iend-Nsl+1:iend,j)
@@ -660,7 +660,7 @@ contains
 
       end do
     end do
-    !$omp end parallel do
+    !!$omp end parallel do
 
     !!
     !! Issue send & receive orders; i-direction
@@ -674,13 +674,13 @@ contains
     !!
     !! packing buffer: j-direction ( Syy, Syz, Sxy )
     !!
-    !$omp parallel do private(ptr)
-    do i=ibeg,iend
+    !!!$omp parallel do private(ptr)
+    do concurrent(i=ibeg:iend)
 #ifdef _ES
       !NEC$ ivdep
       !NEC$ nosync
 #endif
-      do k=kbeg,kend
+      do concurrent(k=kbeg: kend)
         ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
 
         sbuf_jp(        ptr:        ptr+Nsl-1) = Syy(k,i,jend-Nsl+1:jend)
@@ -693,7 +693,7 @@ contains
 
       end do
     end do
-    !$omp end parallel do
+    !!!$omp end parallel do
 
 
     !!
@@ -711,13 +711,13 @@ contains
     !!
     !! restore the data: i-direction
     !!
-    !$omp parallel do private(ptr,i,j,k)
-    do j=jbeg, jend
-      do k=kbeg, kend
+    !!$omp parallel do private(ptr,i,j,k)
+    do concurrent(j=jbeg:jend)
+      do concurrent(k=kbeg: kend)
 
         ptr = (k-kbeg)*Nsl + (j-jbeg)*Nsl*(kend-kbeg+1) + 1
 
-        do i=1, Nsl
+        do concurrent(i=1: Nsl)
 
           Sxx(k,iend+i,j) = rbuf_ip(        ptr+i-1)
           Sxy(k,iend+i,j) = rbuf_ip(  isize+ptr+i-1)
@@ -730,7 +730,7 @@ contains
 
       end do
     end do
-    !$omp end parallel do
+    !!$omp end parallel do
 
 
     !! Terminate mpi data communication
@@ -739,13 +739,13 @@ contains
     !!
     !! restore the data: j-direction
     !!
-    !$omp parallel do private(ptr,i,j,k)
-    do i=ibeg,iend
-      do k=kbeg,kend
+    !!$omp parallel do private(ptr,i,j,k)
+    do concurrent(i=ibeg:iend)
+      do concurrent(k=kbeg: kend)
 
         ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
 
-        do j=1, Nsl
+        do concurrent(j=1: Nsl)
           Syy(k,i,jend+j) = rbuf_jp(        ptr+j-1)
           Syz(k,i,jend+j) = rbuf_jp(  jsize+ptr+j-1)
           Sxy(k,i,jend+j) = rbuf_jp(2*jsize+ptr+j-1)
@@ -757,7 +757,7 @@ contains
 
       end do
     end do
-    !$omp end parallel do
+    !!$omp end parallel do
 
     call pwatch__off( "global__comm_stress" )
 
