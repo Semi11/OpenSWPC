@@ -135,21 +135,17 @@ contains
     real(SP) :: gcc
 
     !!$omp parallel do schedule(dynamic) private( i, j, k, gcc )
-    do concurrent(j=jbeg: jend)
-      do concurrent(i=ibeg: iend)
-        do concurrent(k=kbeg: kend_k)
+    do concurrent(j=jbeg: jend,i=ibeg: iend, k=kbeg: kend_k) local(gcc)
 
-          gcc = gx_c(i) * gy_c(j) * gz_c(k)
-          Sxx(k,i,j) = Sxx(k,i,j) * gcc
-          Syy(k,i,j) = Syy(k,i,j) * gcc
-          Szz(k,i,j) = Szz(k,i,j) * gcc
+      gcc = gx_c(i) * gy_c(j) * gz_c(k)
+      Sxx(k,i,j) = Sxx(k,i,j) * gcc
+      Syy(k,i,j) = Syy(k,i,j) * gcc
+      Szz(k,i,j) = Szz(k,i,j) * gcc
 
-          Syz(k,i,j) = Syz(k,i,j) * gx_c(i) * gy_b(j) * gz_b(k)
-          Sxz(k,i,j) = Sxz(k,i,j) * gx_b(i) * gy_c(j) * gz_b(k)
-          Sxy(k,i,j) = Sxy(k,i,j) * gx_b(i) * gy_b(j) * gz_c(k)
+      Syz(k,i,j) = Syz(k,i,j) * gx_c(i) * gy_b(j) * gz_b(k)
+      Sxz(k,i,j) = Sxz(k,i,j) * gx_b(i) * gy_c(j) * gz_b(k)
+      Sxy(k,i,j) = Sxy(k,i,j) * gx_b(i) * gy_b(j) * gz_c(k)
 
-        end do
-      end do
     end do
     !!$omp end parallel do
 
@@ -162,16 +158,12 @@ contains
     integer :: i, j, k
 
     !!$omp parallel do schedule(dynamic) private(i,j,k)
-    do concurrent(j=jbeg:jend)
-      do concurrent(i=ibeg: iend)
-        do concurrent(k=kbeg: kend)
+    do concurrent(j=jbeg:jend, i=ibeg: iend, k=kbeg: kend)
 
-          Vx(k,i,j) = Vx(k,i,j) * gx_b(i) * gy_c(j) * gz_c(k)
-          Vy(k,i,j) = Vy(k,i,j) * gx_c(i) * gy_b(j) * gz_c(k)
-          Vz(k,i,j) = Vz(k,i,j) * gx_c(i) * gy_c(j) * gz_b(k)
+      Vx(k,i,j) = Vx(k,i,j) * gx_b(i) * gy_c(j) * gz_c(k)
+      Vy(k,i,j) = Vy(k,i,j) * gx_c(i) * gy_b(j) * gz_c(k)
+      Vz(k,i,j) = Vz(k,i,j) * gx_c(i) * gy_c(j) * gz_b(k)
 
-        end do
-      end do
     end do
 
   end subroutine absorb_c__update_vel

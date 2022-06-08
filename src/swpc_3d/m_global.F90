@@ -496,7 +496,7 @@ contains
     !! packing buffer: i-direction
     !!
     !!$omp parallel do private(j,k,ptr)
-    do concurrent(j=jbeg:jend)
+    do concurrent(j=jbeg:jend) local(ptr)
 #ifdef _ES
       !NEC$ ivdep
       !NEC$ nosync
@@ -529,7 +529,7 @@ contains
     !! packing buffer: j-direction
     !!
     !!$omp parallel do private(ptr)
-    do concurrent(i=ibeg:iend)
+    do concurrent(i=ibeg:iend) local(ptr)
 #ifdef _ES
       !NEC$ ivdep
       !NEC$ nosync
@@ -565,22 +565,20 @@ contains
     !! restoring the data: i-direction
     !!
     !!$omp parallel do private(ptr,i,j,k)
-    do concurrent(j=jbeg:jend)
-      do concurrent(k=kbeg: kend)
+    do concurrent(j=jbeg:jend, k=kbeg: kend) local(ptr)
 
-        ptr = ( (k-kbeg) + (j-jbeg)*nz ) * Nsl + 1
+      ptr = ( (k-kbeg) + (j-jbeg)*nz ) * Nsl + 1
 
-        do concurrent(i=1:Nsl)
-          Vx(k,iend+i,j) = rbuf_ip(        ptr+i-1)
-          Vy(k,iend+i,j) = rbuf_ip(  isize+ptr+i-1)
-          Vz(k,iend+i,j) = rbuf_ip(2*isize+ptr+i-1)
+      do concurrent(i=1:Nsl)
+        Vx(k,iend+i,j) = rbuf_ip(        ptr+i-1)
+        Vy(k,iend+i,j) = rbuf_ip(  isize+ptr+i-1)
+        Vz(k,iend+i,j) = rbuf_ip(2*isize+ptr+i-1)
 
-          Vx(k,ibeg-Nsl+i-1,j) = rbuf_im(        ptr+i-1)
-          Vy(k,ibeg-Nsl+i-1,j) = rbuf_im(  isize+ptr+i-1 )
-          Vz(k,ibeg-Nsl+i-1,j) = rbuf_im(2*isize+ptr+i-1 )
-        end do
-
+        Vx(k,ibeg-Nsl+i-1,j) = rbuf_im(        ptr+i-1)
+        Vy(k,ibeg-Nsl+i-1,j) = rbuf_im(  isize+ptr+i-1 )
+        Vz(k,ibeg-Nsl+i-1,j) = rbuf_im(2*isize+ptr+i-1 )
       end do
+
     end do
     !!$omp end parallel do
 
@@ -591,22 +589,20 @@ contains
     !! restoring the data: j-direction
     !!
     !!$omp parallel do private(ptr,i,j,k)
-    do concurrent(i=ibeg: iend)
-      do concurrent(k=kbeg: kend)
+    do concurrent(i=ibeg: iend, k=kbeg: kend) local(ptr)
 
-        ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
+      ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
 
-        do concurrent(j=1: Nsl)
-          Vx(k,i,jend+j) = rbuf_jp(ptr+j-1)
-          Vy(k,i,jend+j) = rbuf_jp(jsize+ptr+j-1)
-          Vz(k,i,jend+j) = rbuf_jp(2*jsize+ptr+j-1)
+      do concurrent(j=1: Nsl)
+        Vx(k,i,jend+j) = rbuf_jp(ptr+j-1)
+        Vy(k,i,jend+j) = rbuf_jp(jsize+ptr+j-1)
+        Vz(k,i,jend+j) = rbuf_jp(2*jsize+ptr+j-1)
 
-          Vx(k,i,jbeg-Nsl+j-1) = rbuf_jm(ptr+j-1)
-          Vy(k,i,jbeg-Nsl+j-1) = rbuf_jm(jsize+ptr+j-1)
-          Vz(k,i,jbeg-Nsl+j-1) = rbuf_jm(2*jsize+ptr+j-1)
-        end do
-
+        Vx(k,i,jbeg-Nsl+j-1) = rbuf_jm(ptr+j-1)
+        Vy(k,i,jbeg-Nsl+j-1) = rbuf_jm(jsize+ptr+j-1)
+        Vz(k,i,jbeg-Nsl+j-1) = rbuf_jm(2*jsize+ptr+j-1)
       end do
+
     end do
     !!$omp end parallel do
 
@@ -642,7 +638,7 @@ contains
     !! packing buffer: i-direction ( Sxx, Sxy, Sxz )
     !!
     !!$omp parallel do private(i,k,ptr)
-    do concurrent(j=jbeg: jend)
+    do concurrent(j=jbeg: jend) local(ptr)
 #ifdef _ES
       !NEC$ ivdep
       !NEC$ nosync
@@ -675,7 +671,7 @@ contains
     !! packing buffer: j-direction ( Syy, Syz, Sxy )
     !!
     !!!$omp parallel do private(ptr)
-    do concurrent(i=ibeg:iend)
+    do concurrent(i=ibeg:iend) local(ptr)
 #ifdef _ES
       !NEC$ ivdep
       !NEC$ nosync
@@ -712,23 +708,21 @@ contains
     !! restore the data: i-direction
     !!
     !!$omp parallel do private(ptr,i,j,k)
-    do concurrent(j=jbeg:jend)
-      do concurrent(k=kbeg: kend)
+    do concurrent(j=jbeg:jend, k=kbeg: kend) local(ptr)
 
-        ptr = (k-kbeg)*Nsl + (j-jbeg)*Nsl*(kend-kbeg+1) + 1
+      ptr = (k-kbeg)*Nsl + (j-jbeg)*Nsl*(kend-kbeg+1) + 1
 
-        do concurrent(i=1: Nsl)
+      do concurrent(i=1: Nsl)
 
-          Sxx(k,iend+i,j) = rbuf_ip(        ptr+i-1)
-          Sxy(k,iend+i,j) = rbuf_ip(  isize+ptr+i-1)
-          Sxz(k,iend+i,j) = rbuf_ip(2*isize+ptr+i-1)
+        Sxx(k,iend+i,j) = rbuf_ip(        ptr+i-1)
+        Sxy(k,iend+i,j) = rbuf_ip(  isize+ptr+i-1)
+        Sxz(k,iend+i,j) = rbuf_ip(2*isize+ptr+i-1)
 
-          Sxx(k,ibeg-Nsl+i-1,j) = rbuf_im(       ptr+i-1)
-          Sxy(k,ibeg-Nsl+i-1,j) = rbuf_im(  isize+ptr+i-1)
-          Sxz(k,ibeg-Nsl+i-1,j) = rbuf_im(2*isize+ptr+i-1)
-        end do
-
+        Sxx(k,ibeg-Nsl+i-1,j) = rbuf_im(       ptr+i-1)
+        Sxy(k,ibeg-Nsl+i-1,j) = rbuf_im(  isize+ptr+i-1)
+        Sxz(k,ibeg-Nsl+i-1,j) = rbuf_im(2*isize+ptr+i-1)
       end do
+
     end do
     !!$omp end parallel do
 
@@ -740,22 +734,20 @@ contains
     !! restore the data: j-direction
     !!
     !!$omp parallel do private(ptr,i,j,k)
-    do concurrent(i=ibeg:iend)
-      do concurrent(k=kbeg: kend)
+    do concurrent(i=ibeg:iend, k=kbeg: kend) local(ptr)
 
-        ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
+      ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
 
-        do concurrent(j=1: Nsl)
-          Syy(k,i,jend+j) = rbuf_jp(        ptr+j-1)
-          Syz(k,i,jend+j) = rbuf_jp(  jsize+ptr+j-1)
-          Sxy(k,i,jend+j) = rbuf_jp(2*jsize+ptr+j-1)
+      do concurrent(j=1: Nsl)
+        Syy(k,i,jend+j) = rbuf_jp(        ptr+j-1)
+        Syz(k,i,jend+j) = rbuf_jp(  jsize+ptr+j-1)
+        Sxy(k,i,jend+j) = rbuf_jp(2*jsize+ptr+j-1)
 
-          Syy(k,i,jbeg-Nsl+j-1) = rbuf_jm(        ptr+j-1)
-          Syz(k,i,jbeg-Nsl+j-1) = rbuf_jm(  jsize+ptr+j-1)
-          Sxy(k,i,jbeg-Nsl+j-1) = rbuf_jm(2*jsize+ptr+j-1)
-        end do
-
+        Syy(k,i,jbeg-Nsl+j-1) = rbuf_jm(        ptr+j-1)
+        Syz(k,i,jbeg-Nsl+j-1) = rbuf_jm(  jsize+ptr+j-1)
+        Sxy(k,i,jbeg-Nsl+j-1) = rbuf_jm(2*jsize+ptr+j-1)
       end do
+
     end do
     !!$omp end parallel do
 
