@@ -38,6 +38,7 @@ module m_source
   integer               :: n_stfprm                                       !< number of parameters for moment-rate function
   real(SP), allocatable :: srcprm(:,:)                                    !< control paramater for moment-rate function at grids
   real(SP), allocatable :: sx(:), sy(:), sz(:)                            !< source location in distance scale
+  real(SP), allocatable :: stime(:)
   integer,  allocatable :: isrc(:), jsrc(:), ksrc(:)                      !< source grid location voxel
   real(MP), allocatable :: mxx(:), myy(:), mzz(:), myz(:), mxz(:), mxy(:) !< moment rate
   real(MP), allocatable :: fx(:), fy(:), fz(:)                            !< body force
@@ -259,6 +260,7 @@ contains
     !!
     allocate( sx(nsrc), sy(nsrc), sz(nsrc) )
     allocate( isrc(nsrc), jsrc(nsrc), ksrc(nsrc) )
+    allocate( stime(nsrc) )
     allocate( srcprm(n_stfprm,nsrc) )
     if( bf_mode ) then
       allocate( fx(nsrc), fy(nsrc), fz(nsrc) )
@@ -864,7 +866,7 @@ contains
     integer  :: ii, jj, kk
     real(MP) :: sdrop
     integer  :: i
-    real(SP) :: stime
+    !real(SP) :: stime
 
     !! ----
 
@@ -874,10 +876,15 @@ contains
 
     t = n2t( it, tbeg, dt )
 
+    do i=1, nsrc
+
+      stime(i) = source__momentrate( t, stftype, n_stfprm, srcprm(:,i) )
+
+    end do
+
     do concurrent(i=1: nsrc)
 
-      stime = source__momentrate( t, stftype, n_stfprm, srcprm(:,i) )
-      sdrop = mo(i) * stime * dt_dxyz
+      sdrop = mo(i) * stime(i) * dt_dxyz
 
       ii = isrc(i)
       jj = jsrc(i)
@@ -920,7 +927,7 @@ contains
     integer, intent(in) :: it !< time grid
     !! --
     integer :: i, ii, jj, kk
-    real(SP) :: t, stime
+    real(SP) :: t!, stime
     !! ----
 
     if( .not. bf_mode ) return
@@ -929,20 +936,24 @@ contains
 
     t = n2t( it, tbeg, dt ) + dt / 2
 
-    do concurrent(i=1: nsrc)
+    do i=1, nsrc
 
-      stime = source__momentrate( t, stftype, n_stfprm, srcprm(:,i) )
+      stime(i) = source__momentrate( t, stftype, n_stfprm, srcprm(:,i) )
+
+    end do
+
+    do concurrent(i=1: nsrc)
 
       ii = isrc(i)
       jj = jsrc(i)
       kk = ksrc(i)
 
-      Vx(kk  ,ii  ,jj  ) = Vx(kk  ,ii  ,jj  ) + bx(kk  ,ii  ,jj  ) * fx(i) * stime * dt_dxyz / 2
-      Vx(kk  ,ii-1,jj  ) = Vx(kk  ,ii-1,jj  ) + bx(kk  ,ii-1,jj  ) * fx(i) * stime * dt_dxyz / 2
-      Vy(kk  ,ii  ,jj  ) = Vy(kk  ,ii  ,jj  ) + by(kk  ,ii  ,jj  ) * fy(i) * stime * dt_dxyz / 2
-      Vy(kk  ,ii  ,jj-1) = Vy(kk  ,ii  ,jj-1) + by(kk  ,ii  ,jj-1) * fy(i) * stime * dt_dxyz / 2
-      Vz(kk  ,ii  ,jj  ) = Vz(kk  ,ii  ,jj  ) + bz(kk  ,ii  ,jj  ) * fz(i) * stime * dt_dxyz / 2
-      Vz(kk-1,ii  ,jj  ) = Vz(kk-1,ii  ,jj  ) + bz(kk-1,ii  ,jj  ) * fz(i) * stime * dt_dxyz / 2
+      Vx(kk  ,ii  ,jj  ) = Vx(kk  ,ii  ,jj  ) + bx(kk  ,ii  ,jj  ) * fx(i) * stime(i) * dt_dxyz / 2
+      Vx(kk  ,ii-1,jj  ) = Vx(kk  ,ii-1,jj  ) + bx(kk  ,ii-1,jj  ) * fx(i) * stime(i) * dt_dxyz / 2
+      Vy(kk  ,ii  ,jj  ) = Vy(kk  ,ii  ,jj  ) + by(kk  ,ii  ,jj  ) * fy(i) * stime(i) * dt_dxyz / 2
+      Vy(kk  ,ii  ,jj-1) = Vy(kk  ,ii  ,jj-1) + by(kk  ,ii  ,jj-1) * fy(i) * stime(i) * dt_dxyz / 2
+      Vz(kk  ,ii  ,jj  ) = Vz(kk  ,ii  ,jj  ) + bz(kk  ,ii  ,jj  ) * fz(i) * stime(i) * dt_dxyz / 2
+      Vz(kk-1,ii  ,jj  ) = Vz(kk-1,ii  ,jj  ) + bz(kk-1,ii  ,jj  ) * fz(i) * stime(i) * dt_dxyz / 2
 
     end do
 
@@ -1063,7 +1074,7 @@ contains
   !! returns number of source grids
   !<
   !! ----
-  real(SP) pure function source__momentrate( t, stftype, nprm, srcprm )
+  real(SP) function source__momentrate( t, stftype, nprm, srcprm )
 
     real(SP), intent(in) :: t
     character(*),  intent(in) :: stftype
