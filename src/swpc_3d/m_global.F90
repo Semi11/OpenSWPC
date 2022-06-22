@@ -496,7 +496,7 @@ contains
     !! packing buffer: i-direction
     !!
     !!$omp parallel do private(j,k,ptr)
-    do concurrent(j=jbeg:jend) local(ptr)
+    do concurrent(j=jbeg:jend) local(ptr, k)
 #ifdef _ES
       !NEC$ ivdep
       !NEC$ nosync
@@ -529,7 +529,7 @@ contains
     !! packing buffer: j-direction
     !!
     !!$omp parallel do private(ptr)
-    do concurrent(i=ibeg:iend) local(ptr)
+    do concurrent(i=ibeg:iend) local(ptr, k)
 #ifdef _ES
       !NEC$ ivdep
       !NEC$ nosync
@@ -565,7 +565,7 @@ contains
     !! restoring the data: i-direction
     !!
     !!$omp parallel do private(ptr,i,j,k)
-    do concurrent(j=jbeg:jend, k=kbeg: kend) local(ptr)
+    do concurrent(j=jbeg:jend, k=kbeg: kend) local(ptr, i)
 
       ptr = ( (k-kbeg) + (j-jbeg)*nz ) * Nsl + 1
 
@@ -589,7 +589,7 @@ contains
     !! restoring the data: j-direction
     !!
     !!$omp parallel do private(ptr,i,j,k)
-    do concurrent(i=ibeg: iend, k=kbeg: kend) local(ptr)
+    do concurrent(i=ibeg: iend, k=kbeg: kend) local(ptr, j)
 
       ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
 
@@ -638,7 +638,7 @@ contains
     !! packing buffer: i-direction ( Sxx, Sxy, Sxz )
     !!
     !!$omp parallel do private(i,k,ptr)
-    do concurrent(j=jbeg: jend) local(ptr)
+    do concurrent(j=jbeg: jend) local(ptr, k)
 #ifdef _ES
       !NEC$ ivdep
       !NEC$ nosync
@@ -671,7 +671,7 @@ contains
     !! packing buffer: j-direction ( Syy, Syz, Sxy )
     !!
     !!!$omp parallel do private(ptr)
-    do concurrent(i=ibeg:iend) local(ptr)
+    do concurrent(i=ibeg:iend) local(ptr, k)
 #ifdef _ES
       !NEC$ ivdep
       !NEC$ nosync
@@ -708,7 +708,7 @@ contains
     !! restore the data: i-direction
     !!
     !!$omp parallel do private(ptr,i,j,k)
-    do concurrent(j=jbeg:jend, k=kbeg: kend) local(ptr)
+    do concurrent(j=jbeg:jend, k=kbeg: kend) local(ptr, i)
 
       ptr = (k-kbeg)*Nsl + (j-jbeg)*Nsl*(kend-kbeg+1) + 1
 
@@ -734,7 +734,7 @@ contains
     !! restore the data: j-direction
     !!
     !!$omp parallel do private(ptr,i,j,k)
-    do concurrent(i=ibeg:iend, k=kbeg: kend) local(ptr)
+    do concurrent(i=ibeg:iend, k=kbeg: kend) local(ptr, j)
 
       ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
 

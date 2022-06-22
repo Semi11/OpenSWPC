@@ -259,7 +259,7 @@ contains
     !!$omp private( i, j, k )
     !!$omp do &
     !!$omp schedule(dynamic)
-    do concurrent(j=jbeg:jend, i=ibeg: iend) local(dxSxx, dySyy, dzSzz, dySyz, dzSyz, dxSxz, dzSxz, dxSxy ,dySxy, gxc0, gxe0, gyc0, gye0, gzc0, gze0)
+    do concurrent(j=jbeg:jend, i=ibeg: iend) local(dxSxx, dySyy, dzSzz, dySyz, dzSyz, dxSxz, dzSxz, dxSxy ,dySxy, gxc0, gxe0, gyc0, gye0, gzc0, gze0, k)
       !j loop
       gyc0(1:4) = gyc(1:4,j)
       gye0(1:4) = gye(1:4,j)
@@ -426,7 +426,7 @@ contains
     !!$omp private( i, j, k )
     !!$omp do &
     !!$omp schedule(dynamic)
-    do concurrent(j=jbeg: jend, i=ibeg: iend) local(gxc0, gxe0, gyc0, gye0, gzc0, gze0, dxVx, dxVy, dxVz, dyVx, dyVy, dyVz, dzVx, dzVy, dzVz,lam2mu_R, lam_R, dxVx_ade, dyVy_ade, dzVz_ade)
+    do concurrent(j=jbeg: jend, i=ibeg: iend) local(gxc0, gxe0, gyc0, gye0, gzc0, gze0, dxVx, dxVy, dxVz, dyVx, dyVy, dyVz, dzVx, dzVy, dzVz,lam2mu_R, lam_R, dxVx_ade, dyVy_ade, dzVz_ade, k)
 
       gyc0(1:4) = gyc(1:4,j)
       gye0(1:4) = gye(1:4,j)

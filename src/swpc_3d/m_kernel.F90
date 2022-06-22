@@ -129,7 +129,7 @@ contains
     !!$omp private( i, j, k )
     !!$omp do &
     !!$omp schedule(static,1)
-    do concurrent(j=jbeg_k: jend_k, i=ibeg_k: iend_k)local(d3Sx3,d3Sy3,d3Sz3)
+    do concurrent(j=jbeg_k: jend_k, i=ibeg_k: iend_k)local(d3Sx3,d3Sy3,d3Sz3,k)
 
       !!
       !! derivateives
@@ -237,7 +237,7 @@ contains
     !!$omp private( i, j, k, m )
     !!$omp do &
     !!$omp schedule(static,1)
-    do concurrent(j=jbeg_k: jend_k+0, i=ibeg_k: iend_k) local(dxVx, dyVy, dzVz, mu2, lam2mu, taup1, taus1, taup_plus1, taus_plus1, d3v3, dyVy_dzVz, dxVx_dzVz, dxVx_dyVy, Rxx_n, Ryy_n, Rzz_n )
+    do concurrent(j=jbeg_k: jend_k+0, i=ibeg_k: iend_k) local(dxVx, dyVy, dzVz, mu2, lam2mu, taup1, taus1, taup_plus1, taus_plus1, d3v3, dyVy_dzVz, dxVx_dzVz, dxVx_dyVy, Rxx_n, Ryy_n, Rzz_n, k )
       !! derivatives
       !!
 
@@ -341,7 +341,7 @@ contains
     !!$omp private( i, j, k, m )
     !!$omp do  &
     !!$omp schedule(static,1)
-    do concurrent(j=jbeg_k: jend_k, i=ibeg_k: iend_k) local(dxVy_dyVx, dxVz_dzVx, dyVz_dzVy, mu2, taus1, taus_plus1, Ryz_n, Rxz_n, Rxy_n )
+    do concurrent(j=jbeg_k: jend_k, i=ibeg_k: iend_k) local(dxVy_dyVx, dxVz_dzVx, dyVz_dzVy, mu2, taus1, taus_plus1, Ryz_n, Rxz_n, Rxy_n, k)
       !!
       !! Derivatives
       !!
