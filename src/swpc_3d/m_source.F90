@@ -868,6 +868,10 @@ contains
     integer  :: i
     !real(SP) :: stime
 
+    real(SP) :: t1,t2,tt
+    real(SP) :: tbeg
+    real(SP) :: trise
+
     !! ----
 
     if( bf_mode ) return
@@ -876,40 +880,233 @@ contains
 
     t = n2t( it, tbeg, dt )
 
-    do i=1, nsrc
+    select case ( trim(stftype) )
+    case ( 'boxcar'   )
+      do concurrent(i=1: nsrc)
 
-      stime(i) = source__momentrate( t, stftype, n_stfprm, srcprm(:,i) )
+        tbeg   = srcprm(1,i)
+        trise  = srcprm(2,i)
+        if ( tbeg <= t .and. t <= tbeg + trise ) then
+          stime(i) = 1.0 / trise
+        else
+          stime(i) = 0.0
+        end if
+        sdrop = mo(i) * stime(i) * dt_dxyz
 
-    end do
+        ii = isrc(i)
+        jj = jsrc(i)
+        kk = ksrc(i)
 
-    do concurrent(i=1: nsrc)
+        Sxx(kk,ii,jj) = Sxx(kk,ii,jj) - mxx(i)*sdrop
+        Syy(kk,ii,jj) = Syy(kk,ii,jj) - myy(i)*sdrop
+        Szz(kk,ii,jj) = Szz(kk,ii,jj) - mzz(i)*sdrop
 
-      sdrop = mo(i) * stime(i) * dt_dxyz
+        Sxy(kk,ii  ,jj  ) = Sxy(kk,ii  ,jj  ) - mxy(i)*sdrop/4
+        Sxy(kk,ii  ,jj-1) = Sxy(kk,ii  ,jj-1) - mxy(i)*sdrop/4
+        Sxy(kk,ii-1,jj  ) = Sxy(kk,ii-1,jj  ) - mxy(i)*sdrop/4
+        Sxy(kk,ii-1,jj-1) = Sxy(kk,ii-1,jj-1) - mxy(i)*sdrop/4
 
-      ii = isrc(i)
-      jj = jsrc(i)
-      kk = ksrc(i)
+        Sxz(kk  ,ii  ,jj) = Sxz(kk  ,ii  ,jj) - mxz(i)*sdrop/4
+        Sxz(kk-1,ii  ,jj) = Sxz(kk-1,ii  ,jj) - mxz(i)*sdrop/4
+        Sxz(kk  ,ii-1,jj) = Sxz(kk  ,ii-1,jj) - mxz(i)*sdrop/4
+        Sxz(kk-1,ii-1,jj) = Sxz(kk-1,ii-1,jj) - mxz(i)*sdrop/4
 
-      Sxx(kk,ii,jj) = Sxx(kk,ii,jj) - mxx(i)*sdrop
-      Syy(kk,ii,jj) = Syy(kk,ii,jj) - myy(i)*sdrop
-      Szz(kk,ii,jj) = Szz(kk,ii,jj) - mzz(i)*sdrop
+        Syz(kk  ,ii,jj  ) = Syz(kk  ,ii,jj  ) - myz(i)*sdrop/4
+        Syz(kk-1,ii,jj  ) = Syz(kk-1,ii,jj  ) - myz(i)*sdrop/4
+        Syz(kk  ,ii,jj-1) = Syz(kk  ,ii,jj-1) - myz(i)*sdrop/4
+        Syz(kk-1,ii,jj-1) = Syz(kk-1,ii,jj-1) - myz(i)*sdrop/4
 
-      Sxy(kk,ii  ,jj  ) = Sxy(kk,ii  ,jj  ) - mxy(i)*sdrop/4
-      Sxy(kk,ii  ,jj-1) = Sxy(kk,ii  ,jj-1) - mxy(i)*sdrop/4
-      Sxy(kk,ii-1,jj  ) = Sxy(kk,ii-1,jj  ) - mxy(i)*sdrop/4
-      Sxy(kk,ii-1,jj-1) = Sxy(kk,ii-1,jj-1) - mxy(i)*sdrop/4
+      end do
+    case ( 'triangle' )
+      do concurrent(i=1: nsrc)
 
-      Sxz(kk  ,ii  ,jj) = Sxz(kk  ,ii  ,jj) - mxz(i)*sdrop/4
-      Sxz(kk-1,ii  ,jj) = Sxz(kk-1,ii  ,jj) - mxz(i)*sdrop/4
-      Sxz(kk  ,ii-1,jj) = Sxz(kk  ,ii-1,jj) - mxz(i)*sdrop/4
-      Sxz(kk-1,ii-1,jj) = Sxz(kk-1,ii-1,jj) - mxz(i)*sdrop/4
+        tbeg   = srcprm(1,i)
+        trise  = srcprm(2,i)
+        if ( tbeg <= t .and. t <= tbeg + trise/2) then
+          stime(i) = 4 * ( t-tbeg ) / ( trise*trise )
+        else if ( tbeg + trise/2 < t .and. t <= tbeg + trise ) then
+          stime(i) = - 4 * ( t - tbeg - trise ) / ( trise * trise )
+        else
+          stime(i) = 0.0
+        end if
+        sdrop = mo(i) * stime(i) * dt_dxyz
 
-      Syz(kk  ,ii,jj  ) = Syz(kk  ,ii,jj  ) - myz(i)*sdrop/4
-      Syz(kk-1,ii,jj  ) = Syz(kk-1,ii,jj  ) - myz(i)*sdrop/4
-      Syz(kk  ,ii,jj-1) = Syz(kk  ,ii,jj-1) - myz(i)*sdrop/4
-      Syz(kk-1,ii,jj-1) = Syz(kk-1,ii,jj-1) - myz(i)*sdrop/4
+        ii = isrc(i)
+        jj = jsrc(i)
+        kk = ksrc(i)
 
-    end do
+        Sxx(kk,ii,jj) = Sxx(kk,ii,jj) - mxx(i)*sdrop
+        Syy(kk,ii,jj) = Syy(kk,ii,jj) - myy(i)*sdrop
+        Szz(kk,ii,jj) = Szz(kk,ii,jj) - mzz(i)*sdrop
+
+        Sxy(kk,ii  ,jj  ) = Sxy(kk,ii  ,jj  ) - mxy(i)*sdrop/4
+        Sxy(kk,ii  ,jj-1) = Sxy(kk,ii  ,jj-1) - mxy(i)*sdrop/4
+        Sxy(kk,ii-1,jj  ) = Sxy(kk,ii-1,jj  ) - mxy(i)*sdrop/4
+        Sxy(kk,ii-1,jj-1) = Sxy(kk,ii-1,jj-1) - mxy(i)*sdrop/4
+
+        Sxz(kk  ,ii  ,jj) = Sxz(kk  ,ii  ,jj) - mxz(i)*sdrop/4
+        Sxz(kk-1,ii  ,jj) = Sxz(kk-1,ii  ,jj) - mxz(i)*sdrop/4
+        Sxz(kk  ,ii-1,jj) = Sxz(kk  ,ii-1,jj) - mxz(i)*sdrop/4
+        Sxz(kk-1,ii-1,jj) = Sxz(kk-1,ii-1,jj) - mxz(i)*sdrop/4
+
+        Syz(kk  ,ii,jj  ) = Syz(kk  ,ii,jj  ) - myz(i)*sdrop/4
+        Syz(kk-1,ii,jj  ) = Syz(kk-1,ii,jj  ) - myz(i)*sdrop/4
+        Syz(kk  ,ii,jj-1) = Syz(kk  ,ii,jj-1) - myz(i)*sdrop/4
+        Syz(kk-1,ii,jj-1) = Syz(kk-1,ii,jj-1) - myz(i)*sdrop/4
+
+      end do
+    case ( 'herrmann' )
+      do concurrent(i=1: nsrc)
+
+        tbeg   = srcprm(1,i)
+        trise  = srcprm(2,i)
+        t1 = tbeg +     trise / 4
+        t2 = tbeg + 3 * trise / 4
+        if( tbeg <= t .and. t < t1 ) then
+          stime(i) = 16 * ( t - tbeg )**2 / ( trise**3 )
+        else if ( t1 <= t .and. t < t2 ) then
+          stime(i) = -2 * ( 8*( t*t + trise*tbeg + tbeg*tbeg- t*trise -2*t*tbeg ) + trise*trise ) / ( trise**3 )
+        else if ( t2 <= t .and. t <= tbeg + trise ) then
+          stime(i) = 16 * ( tbeg + trise - t ) **2 / ( trise**3 )
+        else
+          stime(i) = 0.0
+        end if
+        sdrop = mo(i) * stime(i) * dt_dxyz
+
+        ii = isrc(i)
+        jj = jsrc(i)
+        kk = ksrc(i)
+
+        Sxx(kk,ii,jj) = Sxx(kk,ii,jj) - mxx(i)*sdrop
+        Syy(kk,ii,jj) = Syy(kk,ii,jj) - myy(i)*sdrop
+        Szz(kk,ii,jj) = Szz(kk,ii,jj) - mzz(i)*sdrop
+
+        Sxy(kk,ii  ,jj  ) = Sxy(kk,ii  ,jj  ) - mxy(i)*sdrop/4
+        Sxy(kk,ii  ,jj-1) = Sxy(kk,ii  ,jj-1) - mxy(i)*sdrop/4
+        Sxy(kk,ii-1,jj  ) = Sxy(kk,ii-1,jj  ) - mxy(i)*sdrop/4
+        Sxy(kk,ii-1,jj-1) = Sxy(kk,ii-1,jj-1) - mxy(i)*sdrop/4
+
+        Sxz(kk  ,ii  ,jj) = Sxz(kk  ,ii  ,jj) - mxz(i)*sdrop/4
+        Sxz(kk-1,ii  ,jj) = Sxz(kk-1,ii  ,jj) - mxz(i)*sdrop/4
+        Sxz(kk  ,ii-1,jj) = Sxz(kk  ,ii-1,jj) - mxz(i)*sdrop/4
+        Sxz(kk-1,ii-1,jj) = Sxz(kk-1,ii-1,jj) - mxz(i)*sdrop/4
+
+        Syz(kk  ,ii,jj  ) = Syz(kk  ,ii,jj  ) - myz(i)*sdrop/4
+        Syz(kk-1,ii,jj  ) = Syz(kk-1,ii,jj  ) - myz(i)*sdrop/4
+        Syz(kk  ,ii,jj-1) = Syz(kk  ,ii,jj-1) - myz(i)*sdrop/4
+        Syz(kk-1,ii,jj-1) = Syz(kk-1,ii,jj-1) - myz(i)*sdrop/4
+
+      end do
+    case ( 'cosine'   )
+      do concurrent(i=1: nsrc)
+
+        tbeg   = srcprm(1,i)
+        trise  = srcprm(2,i)
+        if ( tbeg <= t .and. t <= tbeg + trise ) then
+          stime(i) = ( 1 - cos( 2*PI*(t-tbeg)/trise ) ) / trise
+        else
+          stime(i) = 0.0
+        end if
+        sdrop = mo(i) * stime(i) * dt_dxyz
+
+        ii = isrc(i)
+        jj = jsrc(i)
+        kk = ksrc(i)
+
+        Sxx(kk,ii,jj) = Sxx(kk,ii,jj) - mxx(i)*sdrop
+        Syy(kk,ii,jj) = Syy(kk,ii,jj) - myy(i)*sdrop
+        Szz(kk,ii,jj) = Szz(kk,ii,jj) - mzz(i)*sdrop
+
+        Sxy(kk,ii  ,jj  ) = Sxy(kk,ii  ,jj  ) - mxy(i)*sdrop/4
+        Sxy(kk,ii  ,jj-1) = Sxy(kk,ii  ,jj-1) - mxy(i)*sdrop/4
+        Sxy(kk,ii-1,jj  ) = Sxy(kk,ii-1,jj  ) - mxy(i)*sdrop/4
+        Sxy(kk,ii-1,jj-1) = Sxy(kk,ii-1,jj-1) - mxy(i)*sdrop/4
+
+        Sxz(kk  ,ii  ,jj) = Sxz(kk  ,ii  ,jj) - mxz(i)*sdrop/4
+        Sxz(kk-1,ii  ,jj) = Sxz(kk-1,ii  ,jj) - mxz(i)*sdrop/4
+        Sxz(kk  ,ii-1,jj) = Sxz(kk  ,ii-1,jj) - mxz(i)*sdrop/4
+        Sxz(kk-1,ii-1,jj) = Sxz(kk-1,ii-1,jj) - mxz(i)*sdrop/4
+
+        Syz(kk  ,ii,jj  ) = Syz(kk  ,ii,jj  ) - myz(i)*sdrop/4
+        Syz(kk-1,ii,jj  ) = Syz(kk-1,ii,jj  ) - myz(i)*sdrop/4
+        Syz(kk  ,ii,jj-1) = Syz(kk  ,ii,jj-1) - myz(i)*sdrop/4
+        Syz(kk-1,ii,jj-1) = Syz(kk-1,ii,jj-1) - myz(i)*sdrop/4
+
+      end do
+    case ( 'texp'     )
+      do concurrent(i=1: nsrc)
+
+        tbeg   = srcprm(1,i)
+        trise  = srcprm(2,i)
+        if ( tbeg <= t ) then
+          tt = t-tbeg
+          stime(i) = (2*PI)**2 * tt / (trise*trise) * exp( -2*PI*tt / trise )
+        else
+          stime(i) = 0.0
+        end if
+        sdrop = mo(i) * stime(i) * dt_dxyz
+
+        ii = isrc(i)
+        jj = jsrc(i)
+        kk = ksrc(i)
+
+        Sxx(kk,ii,jj) = Sxx(kk,ii,jj) - mxx(i)*sdrop
+        Syy(kk,ii,jj) = Syy(kk,ii,jj) - myy(i)*sdrop
+        Szz(kk,ii,jj) = Szz(kk,ii,jj) - mzz(i)*sdrop
+
+        Sxy(kk,ii  ,jj  ) = Sxy(kk,ii  ,jj  ) - mxy(i)*sdrop/4
+        Sxy(kk,ii  ,jj-1) = Sxy(kk,ii  ,jj-1) - mxy(i)*sdrop/4
+        Sxy(kk,ii-1,jj  ) = Sxy(kk,ii-1,jj  ) - mxy(i)*sdrop/4
+        Sxy(kk,ii-1,jj-1) = Sxy(kk,ii-1,jj-1) - mxy(i)*sdrop/4
+
+        Sxz(kk  ,ii  ,jj) = Sxz(kk  ,ii  ,jj) - mxz(i)*sdrop/4
+        Sxz(kk-1,ii  ,jj) = Sxz(kk-1,ii  ,jj) - mxz(i)*sdrop/4
+        Sxz(kk  ,ii-1,jj) = Sxz(kk  ,ii-1,jj) - mxz(i)*sdrop/4
+        Sxz(kk-1,ii-1,jj) = Sxz(kk-1,ii-1,jj) - mxz(i)*sdrop/4
+
+        Syz(kk  ,ii,jj  ) = Syz(kk  ,ii,jj  ) - myz(i)*sdrop/4
+        Syz(kk-1,ii,jj  ) = Syz(kk-1,ii,jj  ) - myz(i)*sdrop/4
+        Syz(kk  ,ii,jj-1) = Syz(kk  ,ii,jj-1) - myz(i)*sdrop/4
+        Syz(kk-1,ii,jj-1) = Syz(kk-1,ii,jj-1) - myz(i)*sdrop/4
+
+      end do
+    case default
+      do concurrent(i=1: nsrc)
+
+        tbeg   = srcprm(1,i)
+        trise  = srcprm(2,i)
+        if ( tbeg <= t .and. t <= tbeg + trise ) then
+          stime(i) = 3 * Pi * ( sin( Pi*(t-tbeg)/trise ) )**3 / ( 4 * trise )
+        else
+          stime(i) = 0.0
+        end if
+        sdrop = mo(i) * stime(i) * dt_dxyz
+
+        ii = isrc(i)
+        jj = jsrc(i)
+        kk = ksrc(i)
+
+        Sxx(kk,ii,jj) = Sxx(kk,ii,jj) - mxx(i)*sdrop
+        Syy(kk,ii,jj) = Syy(kk,ii,jj) - myy(i)*sdrop
+        Szz(kk,ii,jj) = Szz(kk,ii,jj) - mzz(i)*sdrop
+
+        Sxy(kk,ii  ,jj  ) = Sxy(kk,ii  ,jj  ) - mxy(i)*sdrop/4
+        Sxy(kk,ii  ,jj-1) = Sxy(kk,ii  ,jj-1) - mxy(i)*sdrop/4
+        Sxy(kk,ii-1,jj  ) = Sxy(kk,ii-1,jj  ) - mxy(i)*sdrop/4
+        Sxy(kk,ii-1,jj-1) = Sxy(kk,ii-1,jj-1) - mxy(i)*sdrop/4
+
+        Sxz(kk  ,ii  ,jj) = Sxz(kk  ,ii  ,jj) - mxz(i)*sdrop/4
+        Sxz(kk-1,ii  ,jj) = Sxz(kk-1,ii  ,jj) - mxz(i)*sdrop/4
+        Sxz(kk  ,ii-1,jj) = Sxz(kk  ,ii-1,jj) - mxz(i)*sdrop/4
+        Sxz(kk-1,ii-1,jj) = Sxz(kk-1,ii-1,jj) - mxz(i)*sdrop/4
+
+        Syz(kk  ,ii,jj  ) = Syz(kk  ,ii,jj  ) - myz(i)*sdrop/4
+        Syz(kk-1,ii,jj  ) = Syz(kk-1,ii,jj  ) - myz(i)*sdrop/4
+        Syz(kk  ,ii,jj-1) = Syz(kk  ,ii,jj-1) - myz(i)*sdrop/4
+        Syz(kk-1,ii,jj-1) = Syz(kk-1,ii,jj-1) - myz(i)*sdrop/4
+
+      end do
+    end select
 
     call pwatch__off("source__stressdrop")
 
@@ -929,6 +1126,9 @@ contains
     integer :: i, ii, jj, kk
     real(SP) :: t!, stime
     !! ----
+    real(SP) :: t1,t2,tt
+    real(SP) :: tbeg
+    real(SP) :: trise
 
     if( .not. bf_mode ) return
 
@@ -936,26 +1136,150 @@ contains
 
     t = n2t( it, tbeg, dt ) + dt / 2
 
-    do i=1, nsrc
 
-      stime(i) = source__momentrate( t, stftype, n_stfprm, srcprm(:,i) )
+    select case ( trim(stftype) )
+    case ( 'boxcar'   )
+      do concurrent(i=1: nsrc)
 
-    end do
+        tbeg   = srcprm(1,i)
+        trise  = srcprm(2,i)
+        if ( tbeg <= t .and. t <= tbeg + trise ) then
+          stime(i) = 1.0 / trise
+        else
+          stime(i) = 0.0
+        end if
+        ii = isrc(i)
+        jj = jsrc(i)
+        kk = ksrc(i)
 
-    do concurrent(i=1: nsrc)
+        Vx(kk  ,ii  ,jj  ) = Vx(kk  ,ii  ,jj  ) + bx(kk  ,ii  ,jj  ) * fx(i) * stime(i) * dt_dxyz / 2
+        Vx(kk  ,ii-1,jj  ) = Vx(kk  ,ii-1,jj  ) + bx(kk  ,ii-1,jj  ) * fx(i) * stime(i) * dt_dxyz / 2
+        Vy(kk  ,ii  ,jj  ) = Vy(kk  ,ii  ,jj  ) + by(kk  ,ii  ,jj  ) * fy(i) * stime(i) * dt_dxyz / 2
+        Vy(kk  ,ii  ,jj-1) = Vy(kk  ,ii  ,jj-1) + by(kk  ,ii  ,jj-1) * fy(i) * stime(i) * dt_dxyz / 2
+        Vz(kk  ,ii  ,jj  ) = Vz(kk  ,ii  ,jj  ) + bz(kk  ,ii  ,jj  ) * fz(i) * stime(i) * dt_dxyz / 2
+        Vz(kk-1,ii  ,jj  ) = Vz(kk-1,ii  ,jj  ) + bz(kk-1,ii  ,jj  ) * fz(i) * stime(i) * dt_dxyz / 2
 
-      ii = isrc(i)
-      jj = jsrc(i)
-      kk = ksrc(i)
+      end do
+    case ( 'triangle' )
+      do concurrent(i=1: nsrc)
 
-      Vx(kk  ,ii  ,jj  ) = Vx(kk  ,ii  ,jj  ) + bx(kk  ,ii  ,jj  ) * fx(i) * stime(i) * dt_dxyz / 2
-      Vx(kk  ,ii-1,jj  ) = Vx(kk  ,ii-1,jj  ) + bx(kk  ,ii-1,jj  ) * fx(i) * stime(i) * dt_dxyz / 2
-      Vy(kk  ,ii  ,jj  ) = Vy(kk  ,ii  ,jj  ) + by(kk  ,ii  ,jj  ) * fy(i) * stime(i) * dt_dxyz / 2
-      Vy(kk  ,ii  ,jj-1) = Vy(kk  ,ii  ,jj-1) + by(kk  ,ii  ,jj-1) * fy(i) * stime(i) * dt_dxyz / 2
-      Vz(kk  ,ii  ,jj  ) = Vz(kk  ,ii  ,jj  ) + bz(kk  ,ii  ,jj  ) * fz(i) * stime(i) * dt_dxyz / 2
-      Vz(kk-1,ii  ,jj  ) = Vz(kk-1,ii  ,jj  ) + bz(kk-1,ii  ,jj  ) * fz(i) * stime(i) * dt_dxyz / 2
+        tbeg   = srcprm(1,i)
+        trise  = srcprm(2,i)
+        if ( tbeg <= t .and. t <= tbeg + trise/2) then
+          stime(i) = 4 * ( t-tbeg ) / ( trise*trise )
+        else if ( tbeg + trise/2 < t .and. t <= tbeg + trise ) then
+          stime(i) = - 4 * ( t - tbeg - trise ) / ( trise * trise )
+        else
+          stime(i) = 0.0
+        end if
+        ii = isrc(i)
+        jj = jsrc(i)
+        kk = ksrc(i)
 
-    end do
+        Vx(kk  ,ii  ,jj  ) = Vx(kk  ,ii  ,jj  ) + bx(kk  ,ii  ,jj  ) * fx(i) * stime(i) * dt_dxyz / 2
+        Vx(kk  ,ii-1,jj  ) = Vx(kk  ,ii-1,jj  ) + bx(kk  ,ii-1,jj  ) * fx(i) * stime(i) * dt_dxyz / 2
+        Vy(kk  ,ii  ,jj  ) = Vy(kk  ,ii  ,jj  ) + by(kk  ,ii  ,jj  ) * fy(i) * stime(i) * dt_dxyz / 2
+        Vy(kk  ,ii  ,jj-1) = Vy(kk  ,ii  ,jj-1) + by(kk  ,ii  ,jj-1) * fy(i) * stime(i) * dt_dxyz / 2
+        Vz(kk  ,ii  ,jj  ) = Vz(kk  ,ii  ,jj  ) + bz(kk  ,ii  ,jj  ) * fz(i) * stime(i) * dt_dxyz / 2
+        Vz(kk-1,ii  ,jj  ) = Vz(kk-1,ii  ,jj  ) + bz(kk-1,ii  ,jj  ) * fz(i) * stime(i) * dt_dxyz / 2
+
+      end do
+    case ( 'herrmann' )
+      do concurrent(i=1: nsrc)
+
+        tbeg   = srcprm(1,i)
+        trise  = srcprm(2,i)
+        t1 = tbeg +     trise / 4
+        t2 = tbeg + 3 * trise / 4
+        if( tbeg <= t .and. t < t1 ) then
+          stime(i) = 16 * ( t - tbeg )**2 / ( trise**3 )
+        else if ( t1 <= t .and. t < t2 ) then
+          stime(i) = -2 * ( 8*( t*t + trise*tbeg + tbeg*tbeg- t*trise -2*t*tbeg ) + trise*trise ) / ( trise**3 )
+        else if ( t2 <= t .and. t <= tbeg + trise ) then
+          stime(i) = 16 * ( tbeg + trise - t ) **2 / ( trise**3 )
+        else
+          stime(i) = 0.0
+        end if
+        ii = isrc(i)
+        jj = jsrc(i)
+        kk = ksrc(i)
+
+        Vx(kk  ,ii  ,jj  ) = Vx(kk  ,ii  ,jj  ) + bx(kk  ,ii  ,jj  ) * fx(i) * stime(i) * dt_dxyz / 2
+        Vx(kk  ,ii-1,jj  ) = Vx(kk  ,ii-1,jj  ) + bx(kk  ,ii-1,jj  ) * fx(i) * stime(i) * dt_dxyz / 2
+        Vy(kk  ,ii  ,jj  ) = Vy(kk  ,ii  ,jj  ) + by(kk  ,ii  ,jj  ) * fy(i) * stime(i) * dt_dxyz / 2
+        Vy(kk  ,ii  ,jj-1) = Vy(kk  ,ii  ,jj-1) + by(kk  ,ii  ,jj-1) * fy(i) * stime(i) * dt_dxyz / 2
+        Vz(kk  ,ii  ,jj  ) = Vz(kk  ,ii  ,jj  ) + bz(kk  ,ii  ,jj  ) * fz(i) * stime(i) * dt_dxyz / 2
+        Vz(kk-1,ii  ,jj  ) = Vz(kk-1,ii  ,jj  ) + bz(kk-1,ii  ,jj  ) * fz(i) * stime(i) * dt_dxyz / 2
+
+      end do
+    case ( 'cosine'   )
+      do concurrent(i=1: nsrc)
+
+        tbeg   = srcprm(1,i)
+        trise  = srcprm(2,i)
+        if ( tbeg <= t .and. t <= tbeg + trise ) then
+          stime(i) = ( 1 - cos( 2*PI*(t-tbeg)/trise ) ) / trise
+        else
+          stime(i) = 0.0
+        end if
+        ii = isrc(i)
+        jj = jsrc(i)
+        kk = ksrc(i)
+
+        Vx(kk  ,ii  ,jj  ) = Vx(kk  ,ii  ,jj  ) + bx(kk  ,ii  ,jj  ) * fx(i) * stime(i) * dt_dxyz / 2
+        Vx(kk  ,ii-1,jj  ) = Vx(kk  ,ii-1,jj  ) + bx(kk  ,ii-1,jj  ) * fx(i) * stime(i) * dt_dxyz / 2
+        Vy(kk  ,ii  ,jj  ) = Vy(kk  ,ii  ,jj  ) + by(kk  ,ii  ,jj  ) * fy(i) * stime(i) * dt_dxyz / 2
+        Vy(kk  ,ii  ,jj-1) = Vy(kk  ,ii  ,jj-1) + by(kk  ,ii  ,jj-1) * fy(i) * stime(i) * dt_dxyz / 2
+        Vz(kk  ,ii  ,jj  ) = Vz(kk  ,ii  ,jj  ) + bz(kk  ,ii  ,jj  ) * fz(i) * stime(i) * dt_dxyz / 2
+        Vz(kk-1,ii  ,jj  ) = Vz(kk-1,ii  ,jj  ) + bz(kk-1,ii  ,jj  ) * fz(i) * stime(i) * dt_dxyz / 2
+
+      end do
+    case ( 'texp'     )
+      do concurrent(i=1: nsrc)
+
+        tbeg   = srcprm(1,i)
+        trise  = srcprm(2,i)
+        if ( tbeg <= t ) then
+          tt = t-tbeg
+          stime(i) = (2*PI)**2 * tt / (trise*trise) * exp( -2*PI*tt / trise )
+        else
+          stime(i) = 0.0
+        end if
+        ii = isrc(i)
+        jj = jsrc(i)
+        kk = ksrc(i)
+
+        Vx(kk  ,ii  ,jj  ) = Vx(kk  ,ii  ,jj  ) + bx(kk  ,ii  ,jj  ) * fx(i) * stime(i) * dt_dxyz / 2
+        Vx(kk  ,ii-1,jj  ) = Vx(kk  ,ii-1,jj  ) + bx(kk  ,ii-1,jj  ) * fx(i) * stime(i) * dt_dxyz / 2
+        Vy(kk  ,ii  ,jj  ) = Vy(kk  ,ii  ,jj  ) + by(kk  ,ii  ,jj  ) * fy(i) * stime(i) * dt_dxyz / 2
+        Vy(kk  ,ii  ,jj-1) = Vy(kk  ,ii  ,jj-1) + by(kk  ,ii  ,jj-1) * fy(i) * stime(i) * dt_dxyz / 2
+        Vz(kk  ,ii  ,jj  ) = Vz(kk  ,ii  ,jj  ) + bz(kk  ,ii  ,jj  ) * fz(i) * stime(i) * dt_dxyz / 2
+        Vz(kk-1,ii  ,jj  ) = Vz(kk-1,ii  ,jj  ) + bz(kk-1,ii  ,jj  ) * fz(i) * stime(i) * dt_dxyz / 2
+
+      end do
+    case default
+      do concurrent(i=1: nsrc)
+
+        tbeg   = srcprm(1,i)
+        trise  = srcprm(2,i)
+        if ( tbeg <= t .and. t <= tbeg + trise ) then
+          stime(i) = 3 * Pi * ( sin( Pi*(t-tbeg)/trise ) )**3 / ( 4 * trise )
+        else
+          stime(i) = 0.0
+        end if
+        ii = isrc(i)
+        jj = jsrc(i)
+        kk = ksrc(i)
+
+        Vx(kk  ,ii  ,jj  ) = Vx(kk  ,ii  ,jj  ) + bx(kk  ,ii  ,jj  ) * fx(i) * stime(i) * dt_dxyz / 2
+        Vx(kk  ,ii-1,jj  ) = Vx(kk  ,ii-1,jj  ) + bx(kk  ,ii-1,jj  ) * fx(i) * stime(i) * dt_dxyz / 2
+        Vy(kk  ,ii  ,jj  ) = Vy(kk  ,ii  ,jj  ) + by(kk  ,ii  ,jj  ) * fy(i) * stime(i) * dt_dxyz / 2
+        Vy(kk  ,ii  ,jj-1) = Vy(kk  ,ii  ,jj-1) + by(kk  ,ii  ,jj-1) * fy(i) * stime(i) * dt_dxyz / 2
+        Vz(kk  ,ii  ,jj  ) = Vz(kk  ,ii  ,jj  ) + bz(kk  ,ii  ,jj  ) * fz(i) * stime(i) * dt_dxyz / 2
+        Vz(kk-1,ii  ,jj  ) = Vz(kk-1,ii  ,jj  ) + bz(kk-1,ii  ,jj  ) * fz(i) * stime(i) * dt_dxyz / 2
+
+      end do
+    end select
 
     call pwatch__off("source__bodyforce")
   end subroutine source__bodyforce
