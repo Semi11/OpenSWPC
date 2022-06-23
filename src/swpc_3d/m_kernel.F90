@@ -135,8 +135,8 @@ contains
       !! derivateives
       !!
 
-      !! stress derivatives
       do concurrent(k=kbeg_k: kend_k)
+        !! stress derivatives
         d3Sx3(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r40x  -  (  Sxx(k  ,i+2,j  ) - Sxx(k  ,i-1,j  )  ) * r41x &
           + (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r40y  -  (  Sxy(k  ,i  ,j+1) - Sxy(k  ,i  ,j-2)  ) * r41y &
           + (  Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )  ) * r40z  -  (  Sxz(k+1,i  ,j  ) - Sxz(k-2,i  ,j  )  ) * r41z
@@ -148,49 +148,40 @@ contains
         d3Sz3(k) = (  Sxz(k  ,i  ,j  ) - Sxz(k  ,i-1,j  )  ) * r40x  -  (  Sxz(k  ,i+1,j  ) - Sxz(k  ,i-2,j  )  ) * r41x &
           + (  Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)  ) * r40y  -  (  Syz(k  ,i  ,j+1) - Syz(k  ,i  ,j-2)  ) * r41y &
           + (  Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )  ) * r40z  -  (  Szz(k+2,i  ,j  ) - Szz(k-1,i  ,j  )  ) * r41z
-      end do
 
-      !! overwrite around free surface
-      #ifdef _ES
-      !NEC$ novector
-      #endif
-      do concurrent(k=kfs_top(i,j): kfs_bot(i,j))
-        d3Sx3(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r20x  &
-          + (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r20y  &
-          + (  Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )  ) * r20z
+        !! overwrite around free surface
+        if (k >= kfs_top(i,j) .and. k <= kfs_bot(i,j)) then
+          d3Sx3(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r20x  &
+            + (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r20y  &
+            + (  Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )  ) * r20z
 
-        d3Sy3(k) = (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i-1,j  )  ) * r20x  &
-          + (  Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )  ) * r20y  &
-          + (  Syz(k  ,i  ,j  ) - Syz(k-1,i  ,j  )  ) * r20z
+          d3Sy3(k) = (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i-1,j  )  ) * r20x  &
+            + (  Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )  ) * r20y  &
+            + (  Syz(k  ,i  ,j  ) - Syz(k-1,i  ,j  )  ) * r20z
 
-        d3Sz3(k) = (  Sxz(k  ,i  ,j  ) - Sxz(k  ,i-1,j  )  ) * r20x  &
-          + (  Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)  ) * r20y  &
-          + (  Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )  ) * r20z
-      end do
+          d3Sz3(k) = (  Sxz(k  ,i  ,j  ) - Sxz(k  ,i-1,j  )  ) * r20x  &
+            + (  Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)  ) * r20y  &
+            + (  Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )  ) * r20z
+        endif
 
-      !! overwrite around seafloor
-      #ifdef _ES
-      !NEC$ novector
-      #endif
-      do concurrent(k=kob_top(i,j): kob_bot(i,j))
-        d3Sx3(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r20x  &
-          + (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r20y  &
-          + (  Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )  ) * r20z
+        !! overwrite around seafloor
+        if (k >= kob_top(i,j) .and. k <= kob_bot(i,j)) then
+          d3Sx3(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r20x  &
+            + (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r20y  &
+            + (  Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )  ) * r20z
 
-        d3Sy3(k) = (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i-1,j  )  ) * r20x  &
-          + (  Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )  ) * r20y  &
-          + (  Syz(k  ,i  ,j  ) - Syz(k-1,i  ,j  )  ) * r20z
+          d3Sy3(k) = (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i-1,j  )  ) * r20x  &
+            + (  Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )  ) * r20y  &
+            + (  Syz(k  ,i  ,j  ) - Syz(k-1,i  ,j  )  ) * r20z
 
-        d3Sz3(k) = (  Sxz(k  ,i  ,j  ) - Sxz(k  ,i-1,j  )  ) * r20x  &
-          + (  Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)  ) * r20y  &
-          + (  Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )  ) * r20z
-      end do
+          d3Sz3(k) = (  Sxz(k  ,i  ,j  ) - Sxz(k  ,i-1,j  )  ) * r20x  &
+            + (  Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)  ) * r20y  &
+            + (  Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )  ) * r20z
+        endif
 
-      !!
-      !! update velocity
-      !!
-      do concurrent(k=kbeg_k: kend_k)
-
+        !!
+        !! update velocity
+        !!
         Vx(k,i,j) = Vx(k,i,j) + bx(k,i,j) * d3Sx3(k) * dt
         Vy(k,i,j) = Vy(k,i,j) + by(k,i,j) * d3Sy3(k) * dt
         Vz(k,i,j) = Vz(k,i,j) + bz(k,i,j) * d3Sz3(k) * dt
@@ -238,51 +229,38 @@ contains
     !!$omp do &
     !!$omp schedule(static,1)
     do concurrent(j=jbeg_k: jend_k+0, i=ibeg_k: iend_k) local(dxVx, dyVy, dzVz, mu2, lam2mu, taup1, taus1, taup_plus1, taus_plus1, d3v3, dyVy_dzVz, dxVx_dzVz, dxVx_dyVy, Rxx_n, Ryy_n, Rzz_n, k )
-      !! derivatives
-      !!
 
       do concurrent(k=kbeg_k: kend_k)
 
+        !!
+        !! derivatives
+        !!
         dxVx(k) = (  Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )  ) * r40x  -  (  Vx(k  ,i+1,j  ) - Vx(k  ,i-2,j  )  ) * r41x
         dyVy(k) = (  Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)  ) * r40y  -  (  Vy(k  ,i  ,j+1) - Vy(k  ,i  ,j-2)  ) * r41y
         dzVz(k) = (  Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )  ) * r40z  -  (  Vz(k+1,i  ,j  ) - Vz(k-2,i  ,j  )  ) * r41z
 
-      end do
+        !! overwrite around free surface
+        if (k >= kfs_top(i,j) .and. k <= kfs_bot(i,j)) then
 
-      !! overwrite around free surface
-      #ifdef _ES
-      !NEC$ novector
-      #endif
-      do concurrent(k=kfs_top(i,j): kfs_bot(i,j))
+          dxVx(k) = (  Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )  ) * r20x
+          dyVy(k) = (  Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)  ) * r20y
+          dzVz(k) = (  Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )  ) * r20z
 
-        dxVx(k) = (  Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )  ) * r20x
-        dyVy(k) = (  Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)  ) * r20y
-        dzVz(k) = (  Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )  ) * r20z
+        endif
 
-      end do
+        !! overwrite around seafloor
+        if (k >= kob_top(i,j) .and. k <= kob_bot(i,j)) then
 
-      !! overwrite around seafloor
-      #ifdef _ES
-      !NEC$ novector
-      #endif
-      do concurrent(k=kob_top(i,j): kob_bot(i,j))
+          dxVx(k) = (  Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )  ) * r20x
+          dyVy(k) = (  Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)  ) * r20y
+          dzVz(k) = (  Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )  ) * r20z
 
-        dxVx(k) = (  Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )  ) * r20x
-        dyVy(k) = (  Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)  ) * r20y
-        dzVz(k) = (  Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )  ) * r20z
-
-      end do
+        endif
 
 
-      !!
-      !! update memory variables and stress tensors: normal stress components
-      !!
-
-      #ifdef _FX
-      !ocl unroll('full')
-      #endif
-      do concurrent(k=kbeg_k: kend_k)
-
+        !!
+        !! update memory variables and stress tensors: normal stress components
+        !!
         !!
         !! medium copy
         !!
@@ -342,10 +320,10 @@ contains
     !!$omp do  &
     !!$omp schedule(static,1)
     do concurrent(j=jbeg_k: jend_k, i=ibeg_k: iend_k) local(dxVy_dyVx, dxVz_dzVx, dyVz_dzVy, mu2, taus1, taus_plus1, Ryz_n, Rxz_n, Rxy_n, k)
-      !!
-      !! Derivatives
-      !!
       do concurrent(k=kbeg_k: kend_k)
+        !!
+        !! Derivatives
+        !!
 
         dxVy_dyVx(k) = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r40x  -  (  Vy(k  ,i+2,j  ) - Vy(k  ,i-1,j  )  ) * r41x &
           + (  Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )  ) * r40y  -  (  Vx(k  ,i  ,j+2) - Vx(k  ,i  ,j-1)  ) * r41y
@@ -353,48 +331,35 @@ contains
           + (  Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )  ) * r40z  -  (  Vx(k+2,i  ,j  ) - Vx(k-1,i  ,j  )  ) * r41z
         dyVz_dzVy(k) = (  Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )  ) * r40y  -  (  Vz(k  ,i  ,j+2) - Vz(k  ,i  ,j-1)  ) * r41y &
           + (  Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )  ) * r40z  -  (  Vy(k+2,i  ,j  ) - Vy(k-1,i  ,j  )  ) * r41z
-      end do
 
-      !! overwrite around free surface
-      #ifdef _ES
-      !NEC$ novector
-      #endif
-      do concurrent(k=kfs_top(i,j): kfs_bot(i,j))
+        !! overwrite around free surface
+        if (k >= kfs_top(i,j) .and. k <= kfs_bot(i,j)) then
 
-        dxVy_dyVx(k) = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r20x  &
-          + (  Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )  ) * r20y
-        dxVz_dzVx(k) = (  Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )  ) * r20x  &
-          + (  Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )  ) * r20z
-        dyVz_dzVy(k) = (  Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )  ) * r20y  &
-          + (  Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )  ) * r20z
+          dxVy_dyVx(k) = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r20x  &
+            + (  Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )  ) * r20y
+          dxVz_dzVx(k) = (  Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )  ) * r20x  &
+            + (  Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )  ) * r20z
+          dyVz_dzVy(k) = (  Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )  ) * r20y  &
+            + (  Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )  ) * r20z
 
-      end do
+        endif
 
-      !! overwrite around seafloor
-      #ifdef _ES
-      !NEC$ novector
-      #endif
-      do concurrent(k=kob_top(i,j): kob_bot(i,j))
+        !! overwrite around seafloor
+        if (k >= kob_top(i,j) .and. k <= kob_bot(i,j)) then
 
-        dxVy_dyVx(k) = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r20x  &
-          + (  Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )  ) * r20y
-        dxVz_dzVx(k) = (  Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )  ) * r20x  &
-          + (  Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )  ) * r20z
-        dyVz_dzVy(k) = (  Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )  ) * r20y  &
-          + (  Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )  ) * r20z
+          dxVy_dyVx(k) = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r20x  &
+            + (  Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )  ) * r20y
+          dxVz_dzVx(k) = (  Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )  ) * r20x  &
+            + (  Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )  ) * r20z
+          dyVz_dzVy(k) = (  Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )  ) * r20y  &
+            + (  Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )  ) * r20z
 
-      end do
+        endif
 
 
-      !!
-      !! update memory variables and stress tensors: shear stress components
-      !!
-
-      #ifdef _FX
-      !ocl unroll('full')
-      #endif
-      do concurrent(k=kbeg_k: kend_k)
-
+        !!
+        !! update memory variables and stress tensors: shear stress components
+        !!
         !!
         !! medium copy
         !!
