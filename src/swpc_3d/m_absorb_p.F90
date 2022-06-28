@@ -173,9 +173,9 @@ contains
 
     integer :: i, j, k
     real(SP) :: gxc0(4), gxe0(4), gyc0(4), gye0(4), gzc0(4), gze0(4)
-    real(MP) :: dxSxx(kbeg:kend), dySxy(kbeg:kend), dzSxz(kbeg:kend)
-    real(MP) :: dxSxy(kbeg:kend), dySyy(kbeg:kend), dzSyz(kbeg:kend)
-    real(MP) :: dxSxz(kbeg:kend), dySyz(kbeg:kend), dzSzz(kbeg:kend)
+    real(MP) :: dxSxx, dySxy, dzSxz
+    real(MP) :: dxSxy, dySyy, dzSyz
+    real(MP) :: dxSxz, dySyz, dzSzz
 
     !!
     !! Horizontal zero-derivative boundary (for plane wave mode)
@@ -273,23 +273,19 @@ contains
       !!
       do concurrent(k=kbeg_a(i,j): kend)
 
-        dxSxx(k) = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r20x
-        dySyy(k) = (  Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )  ) * r20y
-        dzSzz(k) = (  Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )  ) * r20z
-        dySyz(k) = (  Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)  ) * r20y
-        dzSyz(k) = (  Syz(k  ,i  ,j  ) - Syz(k-1,i  ,j  )  ) * r20z
-        dxSxz(k) = (  Sxz(k  ,i  ,j  ) - Sxz(k  ,i-1,j  )  ) * r20x
-        dzSxz(k) = (  Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )  ) * r20z
-        dxSxy(k) = (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i-1,j  )  ) * r20x
-        dySxy(k) = (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r20y
-
-      end do
-
+        dxSxx = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r20x
+        dySyy = (  Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )  ) * r20y
+        dzSzz = (  Szz(k+1,i  ,j  ) - Szz(k  ,i  ,j  )  ) * r20z
+        dySyz = (  Syz(k  ,i  ,j  ) - Syz(k  ,i  ,j-1)  ) * r20y
+        dzSyz = (  Syz(k  ,i  ,j  ) - Syz(k-1,i  ,j  )  ) * r20z
+        dxSxz = (  Sxz(k  ,i  ,j  ) - Sxz(k  ,i-1,j  )  ) * r20x
+        dzSxz = (  Sxz(k  ,i  ,j  ) - Sxz(k-1,i  ,j  )  ) * r20z
+        dxSxy = (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i-1,j  )  ) * r20x
+        dySxy = (  Sxy(k  ,i  ,j  ) - Sxy(k  ,i  ,j-1)  ) * r20y
 
       !!
       !! update velocity
       !!
-      do concurrent(k=kbeg_a(i,j): kend)
 
         gzc0(1:4) = gzc(1:4,k)
         gze0(1:4) = gze(1:4,k)
@@ -298,15 +294,15 @@ contains
         !! Velocity Updates
         !!
         Vx(k,i,j) = Vx(k,i,j) &
-            + bx(k,i,j) * ( gxe0(1) * dxSxx(k)     + gyc0(1) * dySxy(k)     + gzc0(1) * dzSxz(k)       &
+            + bx(k,i,j) * ( gxe0(1) * dxSxx     + gyc0(1) * dySxy     + gzc0(1) * dzSxz       &
             + gxe0(2) * axSxx(k,i,j) + gyc0(2) * aySxy(k,i,j) + gzc0(2) * azSxz(k,i,j)  ) * dt
 
         Vy(k,i,j) = Vy(k,i,j) &
-            + by(k,i,j) * ( gxc0(1) * dxSxy(k)     + gye0(1) * dySyy(k)     + gzc0(1) * dzSyz(k)       &
+            + by(k,i,j) * ( gxc0(1) * dxSxy     + gye0(1) * dySyy     + gzc0(1) * dzSyz       &
             + gxc0(2) * axSxy(k,i,j) + gye0(2) * aySyy(k,i,j) + gzc0(2) * azSyz(k,i,j)  ) * dt
 
         Vz(k,i,j) = Vz(k,i,j) &
-            + bz(k,i,j) * ( gxc0(1) * dxSxz(k)     + gyc0(1) * dySyz(k)     + gze0(1) * dzSzz(k)       &
+            + bz(k,i,j) * ( gxc0(1) * dxSxz     + gyc0(1) * dySyz     + gze0(1) * dzSzz       &
             + gxc0(2) * axSxz(k,i,j) + gyc0(2) * aySyz(k,i,j) + gze0(2) * azSzz(k,i,j)  ) * dt
 
 
@@ -314,17 +310,17 @@ contains
         !! ADE updates
         !!
 
-        axSxx(k,i,j) = gxe0(3) * axSxx(k,i,j) + gxe0(4) * dxSxx(k) * dt
-        aySxy(k,i,j) = gyc0(3) * aySxy(k,i,j) + gyc0(4) * dySxy(k) * dt
-        azSxz(k,i,j) = gzc0(3) * azSxz(k,i,j) + gzc0(4) * dzSxz(k) * dt
+        axSxx(k,i,j) = gxe0(3) * axSxx(k,i,j) + gxe0(4) * dxSxx * dt
+        aySxy(k,i,j) = gyc0(3) * aySxy(k,i,j) + gyc0(4) * dySxy * dt
+        azSxz(k,i,j) = gzc0(3) * azSxz(k,i,j) + gzc0(4) * dzSxz * dt
 
-        axSxy(k,i,j) = gxc0(3) * axSxy(k,i,j) + gxc0(4) * dxSxy(k) * dt
-        aySyy(k,i,j) = gye0(3) * aySyy(k,i,j) + gye0(4) * dySyy(k) * dt
-        azSyz(k,i,j) = gzc0(3) * azSyz(k,i,j) + gzc0(4) * dzSyz(k) * dt
+        axSxy(k,i,j) = gxc0(3) * axSxy(k,i,j) + gxc0(4) * dxSxy * dt
+        aySyy(k,i,j) = gye0(3) * aySyy(k,i,j) + gye0(4) * dySyy * dt
+        azSyz(k,i,j) = gzc0(3) * azSyz(k,i,j) + gzc0(4) * dzSyz * dt
 
-        axSxz(k,i,j) = gxc0(3) * axSxz(k,i,j) + gxc0(4) * dxSxz(k) * dt
-        aySyz(k,i,j) = gyc0(3) * aySyz(k,i,j) + gyc0(4) * dySyz(k) * dt
-        azSzz(k,i,j) = gze0(3) * azSzz(k,i,j) + gze0(4) * dzSzz(k) * dt
+        axSxz(k,i,j) = gxc0(3) * axSxz(k,i,j) + gxc0(4) * dxSxz * dt
+        aySyz(k,i,j) = gyc0(3) * aySyz(k,i,j) + gyc0(4) * dySyz * dt
+        azSzz(k,i,j) = gze0(3) * azSzz(k,i,j) + gze0(4) * dzSzz * dt
 
       end do
     end do
@@ -343,9 +339,9 @@ contains
     real(SP) :: lam2mu_R, lam_R
     real(SP) :: dxVx_ade, dyVy_ade, dzVz_ade
     real(SP) :: gxc0(4), gxe0(4), gyc0(4), gye0(4), gzc0(4), gze0(4)
-    real(MP) :: dxVx(kbeg_min:kend),  dyVx(kbeg_min:kend),  dzVx(kbeg_min:kend)
-    real(MP) :: dxVy(kbeg_min:kend),  dyVy(kbeg_min:kend),  dzVy(kbeg_min:kend)
-    real(MP) :: dxVz(kbeg_min:kend),  dyVz(kbeg_min:kend),  dzVz(kbeg_min:kend)
+    real(MP) :: dxVx,  dyVx,  dzVx
+    real(MP) :: dxVy,  dyVy,  dzVy
+    real(MP) :: dxVz,  dyVz,  dzVz
 
     !! ----
 
@@ -440,22 +436,19 @@ contains
       !!
       do concurrent(k=kbeg_a(i,j): kend)
 
-        dxVx(k) = (  Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )  ) * r20x
-        dxVy(k) = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r20x
-        dxVz(k) = (  Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )  ) * r20x
-        dyVx(k) = (  Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )  ) * r20y
-        dyVy(k) = (  Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)  ) * r20y
-        dyVz(k) = (  Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )  ) * r20y
-        dzVx(k) = (  Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )  ) * r20z
-        dzVy(k) = (  Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )  ) * r20z
-        dzVz(k) = (  Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )  ) * r20z
-
-      end do
+        dxVx = (  Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )  ) * r20x
+        dxVy = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r20x
+        dxVz = (  Vz(k  ,i+1,j  ) - Vz(k  ,i  ,j  )  ) * r20x
+        dyVx = (  Vx(k  ,i  ,j+1) - Vx(k  ,i  ,j  )  ) * r20y
+        dyVy = (  Vy(k  ,i  ,j  ) - Vy(k  ,i  ,j-1)  ) * r20y
+        dyVz = (  Vz(k  ,i  ,j+1) - Vz(k  ,i  ,j  )  ) * r20y
+        dzVx = (  Vx(k+1,i  ,j  ) - Vx(k  ,i  ,j  )  ) * r20z
+        dzVy = (  Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )  ) * r20z
+        dzVz = (  Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )  ) * r20z
 
       !!
       !! Update Normal Stress
       !!
-      do concurrent(k=kbeg_a(i,j): kend)
 
         gzc0(1:4) = gzc(1:4,k)
 
@@ -469,9 +462,9 @@ contains
         !!
         !! Normal Stress
         !!
-        dxVx_ade = gxc0(1) * dxVx(k) + gxc0(2) * axVx(k,i,j)
-        dyVy_ade = gyc0(1) * dyVy(k) + gyc0(2) * ayVy(k,i,j)
-        dzVz_ade = gzc0(1) * dzVz(k) + gzc0(2) * azVz(k,i,j)
+        dxVx_ade = gxc0(1) * dxVx + gxc0(2) * axVx(k,i,j)
+        dyVy_ade = gyc0(1) * dyVy + gyc0(2) * ayVy(k,i,j)
+        dzVz_ade = gzc0(1) * dzVz + gzc0(2) * azVz(k,i,j)
         Sxx(k,i,j) = Sxx(k,i,j) + ( lam2mu_R * dxVx_ade + lam_R * ( dyVy_ade + dzVz_ade ) ) * dt
         Syy(k,i,j) = Syy(k,i,j) + ( lam2mu_R * dyVy_ade + lam_R * ( dxVx_ade + dzVz_ade ) ) * dt
         Szz(k,i,j) = Szz(k,i,j) + ( lam2mu_R * dzVz_ade + lam_R * ( dxVx_ade + dyVy_ade ) ) * dt
@@ -480,35 +473,31 @@ contains
         !!
         !! ADE
         !!
-        axVx(k,i,j) = gxc0(3) * axVx(k,i,j) + gxc0(4) * dxVx(k) * dt
-        ayVy(k,i,j) = gyc0(3) * ayVy(k,i,j) + gyc0(4) * dyVy(k) * dt
-        azVz(k,i,j) = gzc0(3) * azVz(k,i,j) + gzc0(4) * dzVz(k) * dt
-
-      end do
-
+        axVx(k,i,j) = gxc0(3) * axVx(k,i,j) + gxc0(4) * dxVx * dt
+        ayVy(k,i,j) = gyc0(3) * ayVy(k,i,j) + gyc0(4) * dyVy * dt
+        azVz(k,i,j) = gzc0(3) * azVz(k,i,j) + gzc0(4) * dzVz * dt
 
       !!
       !! Update Shear Stress
       !!
-      do concurrent(k=kbeg_a(i,j): kend)
 
         gze0(1:4) = gze(1:4,k)
 
-        Syz(k,i,j) = Syz(k,i,j) + muyz(k,i,j) * ( gye0(1) * dyVz(k)     + gze0(1) * dzVy(k) &
+        Syz(k,i,j) = Syz(k,i,j) + muyz(k,i,j) * ( gye0(1) * dyVz     + gze0(1) * dzVy &
           + gye0(2) * ayVz(k,i,j) + gze0(2) * azVy(k,i,j) ) * dt
 
-        Sxz(k,i,j) = Sxz(k,i,j) + muxz(k,i,j) * ( gxe0(1) * dxVz(k)     + gze0(1) * dzVx(k) &
+        Sxz(k,i,j) = Sxz(k,i,j) + muxz(k,i,j) * ( gxe0(1) * dxVz     + gze0(1) * dzVx &
           + gxe0(2) * axVz(k,i,j) + gze0(2) * azVx(k,i,j) ) * dt
 
-        Sxy(k,i,j) = Sxy(k,i,j) + muxy(k,i,j) * ( gxe0(1) * dxVy(k)     + gye0(1) * dyVx(k) &
+        Sxy(k,i,j) = Sxy(k,i,j) + muxy(k,i,j) * ( gxe0(1) * dxVy     + gye0(1) * dyVx &
           + gxe0(2) * axVy(k,i,j) + gye0(2) * ayVx(k,i,j) ) * dt
 
-        ayVx(k,i,j) = gye0(3) * ayVx(k,i,j) + gye0(4) * dyVx(k) * dt
-        azVx(k,i,j) = gze0(3) * azVx(k,i,j) + gze0(4) * dzVx(k) * dt
-        axVy(k,i,j) = gxe0(3) * axVy(k,i,j) + gxe0(4) * dxVy(k) * dt
-        azVy(k,i,j) = gze0(3) * azVy(k,i,j) + gze0(4) * dzVy(k) * dt
-        axVz(k,i,j) = gxe0(3) * axVz(k,i,j) + gxe0(4) * dxVz(k) * dt
-        ayVz(k,i,j) = gye0(3) * ayVz(k,i,j) + gye0(4) * dyVz(k) * dt
+        ayVx(k,i,j) = gye0(3) * ayVx(k,i,j) + gye0(4) * dyVx * dt
+        azVx(k,i,j) = gze0(3) * azVx(k,i,j) + gze0(4) * dzVx * dt
+        axVy(k,i,j) = gxe0(3) * axVy(k,i,j) + gxe0(4) * dxVy * dt
+        azVy(k,i,j) = gze0(3) * azVy(k,i,j) + gze0(4) * dzVy * dt
+        axVz(k,i,j) = gxe0(3) * axVz(k,i,j) + gxe0(4) * dxVz * dt
+        ayVz(k,i,j) = gye0(3) * ayVz(k,i,j) + gye0(4) * dyVz * dt
 
 
     end do
