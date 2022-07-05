@@ -184,15 +184,15 @@ contains
       if( idx == 0 ) then
         !!$omp parallel private(j,k)
         !!$omp do schedule(dynamic)
-        do concurrent(j=jbeg: jend)
-          do concurrent(k=kbeg_a(1,j): kend)
+        do concurrent(j=jbeg: jend, k=kbeg: kend)
+          if (k >= kbeg_a(1,j)) then
             Sxx(k,0,j) = 2 * Sxx(k,1,j) - Sxx(k,2,j)
             Syy(k,0,j) = 2 * Syy(k,1,j) - Syy(k,2,j)
             Szz(k,0,j) = 2 * Szz(k,1,j) - Szz(k,2,j)
             Syz(k,0,j) = 2 * Syz(k,1,j) - Syz(k,2,j)
             Sxz(k,0,j) = 2 * Sxz(k,1,j) - Sxz(k,2,j)
             Sxy(k,0,j) = 2 * Sxy(k,1,j) - Sxy(k,2,j)
-          end do
+          end if
         end do
         !!$omp end do nowait
         !!$omp end parallel
@@ -201,13 +201,15 @@ contains
       if( idx == nproc_x -1 ) then
         !!$omp parallel private(j,k)
         !!$omp do schedule(dynamic)
-        do concurrent(j=jbeg:jend, k=kbeg: kend)
-          Sxx(k,nx+1,j) = 2 * Sxx(k,nx,j) - Sxx(k,nx-1,j)
-          Syy(k,nx+1,j) = 2 * Syy(k,nx,j) - Syy(k,nx-1,j)
-          Szz(k,nx+1,j) = 2 * Szz(k,nx,j) - Szz(k,nx-1,j)
-          Syz(k,nx+1,j) = 2 * Syz(k,nx,j) - Syz(k,nx-1,j)
-          Sxz(k,nx+1,j) = 2 * Sxz(k,nx,j) - Sxz(k,nx-1,j)
-          Sxy(k,nx+1,j) = 2 * Sxy(k,nx,j) - Sxy(k,nx-1,j)
+        do concurrent(j=jbeg: jend, k=kbeg: kend)
+          if (k >= kbeg_a(nx,j)) then
+            Sxx(k,nx+1,j) = 2 * Sxx(k,nx,j) - Sxx(k,nx-1,j)
+            Syy(k,nx+1,j) = 2 * Syy(k,nx,j) - Syy(k,nx-1,j)
+            Szz(k,nx+1,j) = 2 * Szz(k,nx,j) - Szz(k,nx-1,j)
+            Syz(k,nx+1,j) = 2 * Syz(k,nx,j) - Syz(k,nx-1,j)
+            Sxz(k,nx+1,j) = 2 * Sxz(k,nx,j) - Sxz(k,nx-1,j)
+            Sxy(k,nx+1,j) = 2 * Sxy(k,nx,j) - Sxy(k,nx-1,j)
+          end if
         end do
         !!$omp end do nowait
         !!$omp end parallel
@@ -216,15 +218,15 @@ contains
       if( idy == 0 ) then
         !!$omp parallel private(i,k)
         !!$omp do schedule(dynamic)
-        do concurrent(i=ibeg: iend)
-          do concurrent(k=kbeg_a(i,1): kend)
+        do concurrent(i=ibeg: iend, k=kbeg: kend)
+          if (k >= kbeg_a(i,1)) then
             Sxx(k,i,0) = 2 * Sxx(k,i,1) - Sxx(k,i,2)
             Syy(k,i,0) = 2 * Syy(k,i,1) - Syy(k,i,2)
             Szz(k,i,0) = 2 * Szz(k,i,1) - Szz(k,i,2)
             Syz(k,i,0) = 2 * Syz(k,i,1) - Syz(k,i,2)
             Sxz(k,i,0) = 2 * Sxz(k,i,1) - Sxz(k,i,2)
             Sxy(k,i,0) = 2 * Sxy(k,i,1) - Sxy(k,i,2)
-          end do
+          end if
         end do
         !!$omp end do nowait
         !!$omp end parallel
@@ -233,15 +235,15 @@ contains
       if( idy == nproc_y -1 ) then
         !!$omp parallel private(i,k)
         !!$omp do schedule(dynamic)
-        do concurrent(i=ibeg: iend)
-          do concurrent(k=kbeg_a(i,ny): kend)
+        do concurrent(i=ibeg: iend, k=kbeg: kend)
+          if (k >= kbeg_a(i,ny)) then
             Sxx(k,i,ny+1) = 2 * Sxx(k,i,ny) - Sxx(k,i,ny-1)
             Syy(k,i,ny+1) = 2 * Syy(k,i,ny) - Syy(k,i,ny-1)
             Szz(k,i,ny+1) = 2 * Szz(k,i,ny) - Szz(k,i,ny-1)
             Syz(k,i,ny+1) = 2 * Syz(k,i,ny) - Syz(k,i,ny-1)
             Sxz(k,i,ny+1) = 2 * Sxz(k,i,ny) - Sxz(k,i,ny-1)
             Sxy(k,i,ny+1) = 2 * Sxy(k,i,ny) - Sxy(k,i,ny-1)
-          end do
+          end if
         end do
         !!$omp end do nowait
         !!$omp end parallel
@@ -259,7 +261,7 @@ contains
     !!$omp private( i, j, k )
     !!$omp do &
     !!$omp schedule(dynamic)
-    do concurrent(j=jbeg:jend, i=ibeg: iend) local(dxSxx, dySyy, dzSzz, dySyz, dzSyz, dxSxz, dzSxz, dxSxy ,dySxy, gxc0, gxe0, gyc0, gye0, gzc0, gze0, k)
+    do concurrent(j=jbeg:jend, i=ibeg: iend, k=kbeg: kend) local(dxSxx, dySyy, dzSzz, dySyz, dzSyz, dxSxz, dzSxz, dxSxy ,dySxy, gxc0, gxe0, gyc0, gye0, gzc0, gze0)
       !j loop
       gyc0(1:4) = gyc(1:4,j)
       gye0(1:4) = gye(1:4,j)
@@ -271,7 +273,7 @@ contains
       !!
       !! Derivatives
       !!
-      do concurrent(k=kbeg_a(i,j): kend)
+      if (k >= kbeg_a(i,j)) then
 
         dxSxx = (  Sxx(k  ,i+1,j  ) - Sxx(k  ,i  ,j  )  ) * r20x
         dySyy = (  Syy(k  ,i  ,j+1) - Syy(k  ,i  ,j  )  ) * r20y
@@ -322,7 +324,7 @@ contains
         aySyz(k,i,j) = gyc0(3) * aySyz(k,i,j) + gyc0(4) * dySyz * dt
         azSzz(k,i,j) = gze0(3) * azSzz(k,i,j) + gze0(4) * dzSzz * dt
 
-      end do
+      end if
     end do
     !!$omp end do nowait
     !!$omp end parallel
@@ -353,12 +355,12 @@ contains
       if( idx == 0 ) then
         !!$omp parallel private(j,k)
         !!$omp do schedule(dynamic)
-        do concurrent(j=jbeg: jend)
-          do concurrent(k=kbeg_a(1,j): kend)
+        do concurrent(j=jbeg: jend, k=kbeg: kend)
+          if (k >= kbeg_a(1,j)) then
             Vx(k,0,j) = 2* Vx(k,1,j)-Vx(k,2,j)
             Vy(k,0,j) = 2* Vy(k,1,j)-Vy(k,2,j)
             Vz(k,0,j) = 2* Vz(k,1,j)-Vz(k,2,j)
-          end do
+          end if
         end do
         !!$omp end do nowait
         !!$omp end parallel
@@ -367,12 +369,12 @@ contains
       if( idx == nproc_x -1 ) then
         !!$omp parallel private(j,k)
         !!$omp do schedule(dynamic)
-        do concurrent(j=jbeg: jend)
-          do concurrent(k=kbeg_a(nx,j): kend)
+        do concurrent(j=jbeg: jend, k=kbeg: kend)
+          if (k >= kbeg_a(nx,j)) then
             Vx(k,nx+1,j) = 2 * Vx(k,nx,j) - Vx(k,nx-1,j)
             Vy(k,nx+1,j) = 2 * Vy(k,nx,j) - Vy(k,nx-1,j)
             Vz(k,nx+1,j) = 2 * Vz(k,nx,j) - Vz(k,nx-1,j)
-          end do
+          end if
         end do
         !!$omp end do nowait
         !!$omp end parallel
@@ -381,12 +383,12 @@ contains
       if( idy == 0 ) then
         !!$omp parallel private(i,k)
         !!$omp do schedule(dynamic)
-        do concurrent(i=ibeg: iend)
-          do concurrent(k=kbeg_a(i,1): kend)
+        do concurrent(i=ibeg: iend, k=kbeg: kend)
+          if (k >= kbeg_a(i,1)) then
             Vx(k,i,0) = 2 * Vx(k,i,1) - Vx(k,i,2)
             Vy(k,i,0) = 2 * Vy(k,i,1) - Vy(k,i,2)
             Vz(k,i,0) = 2 * Vz(k,i,1) - Vz(k,i,2)
-          end do
+          end if
         end do
         !!$omp end do nowait
         !!$omp end parallel
@@ -395,12 +397,12 @@ contains
       if( idy == nproc_y -1 ) then
         !!$omp parallel private(i,k)
         !!$omp do schedule(dynamic)
-        do concurrent(i=ibeg: iend)
-          do concurrent(k=kbeg_a(i,ny): kend)
+        do concurrent(i=ibeg: iend, k=kbeg: kend)
+          if (k >= kbeg_a(i,ny)) then
             Vx(k,i,ny+1) = 2 * Vx(k,i,ny) - Vx(k,i,ny-1)
             Vy(k,i,ny+1) = 2 * Vy(k,i,ny) - Vy(k,i,ny-1)
             Vz(k,i,ny+1) = 2 * Vz(k,i,ny) - Vz(k,i,ny-1)
-          end do
+          end if
         end do
         !!$omp end do nowait
         !!$omp end parallel
@@ -422,7 +424,7 @@ contains
     !!$omp private( i, j, k )
     !!$omp do &
     !!$omp schedule(dynamic)
-    do concurrent(j=jbeg: jend, i=ibeg: iend) local(gxc0, gxe0, gyc0, gye0, gzc0, gze0, dxVx, dxVy, dxVz, dyVx, dyVy, dyVz, dzVx, dzVy, dzVz,lam2mu_R, lam_R, dxVx_ade, dyVy_ade, dzVz_ade, k)
+    do concurrent(j=jbeg: jend, i=ibeg: iend, k=kbeg: kend) local(gxc0, gxe0, gyc0, gye0, gzc0, gze0, dxVx, dxVy, dxVz, dyVx, dyVy, dyVz, dzVx, dzVy, dzVz,lam2mu_R, lam_R, dxVx_ade, dyVy_ade, dzVz_ade)
 
       gyc0(1:4) = gyc(1:4,j)
       gye0(1:4) = gye(1:4,j)
@@ -434,7 +436,7 @@ contains
       !!
       !! Derivatives
       !!
-      do concurrent(k=kbeg_a(i,j): kend)
+      if (k >= kbeg_a(i,j)) then
 
         dxVx = (  Vx(k  ,i  ,j  ) - Vx(k  ,i-1,j  )  ) * r20x
         dxVy = (  Vy(k  ,i+1,j  ) - Vy(k  ,i  ,j  )  ) * r20x
@@ -446,9 +448,9 @@ contains
         dzVy = (  Vy(k+1,i  ,j  ) - Vy(k  ,i  ,j  )  ) * r20z
         dzVz = (  Vz(k  ,i  ,j  ) - Vz(k-1,i  ,j  )  ) * r20z
 
-      !!
-      !! Update Normal Stress
-      !!
+        !!
+        !! Update Normal Stress
+        !!
 
         gzc0(1:4) = gzc(1:4,k)
 
@@ -477,9 +479,9 @@ contains
         ayVy(k,i,j) = gyc0(3) * ayVy(k,i,j) + gyc0(4) * dyVy * dt
         azVz(k,i,j) = gzc0(3) * azVz(k,i,j) + gzc0(4) * dzVz * dt
 
-      !!
-      !! Update Shear Stress
-      !!
+        !!
+        !! Update Shear Stress
+        !!
 
         gze0(1:4) = gze(1:4,k)
 
@@ -500,8 +502,8 @@ contains
         ayVz(k,i,j) = gye0(3) * ayVz(k,i,j) + gye0(4) * dyVz * dt
 
 
+      end if
     end do
-  end do
     !!$omp end do nowait
     !!$omp end parallel
     !!$omp barrier
