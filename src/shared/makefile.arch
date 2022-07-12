@@ -216,3 +216,20 @@ ifeq ($(arch),bdec-a)
   endif
 
 endif
+
+ifeq ($(arch),bdec-ac)
+
+  FC      = mpif90
+  FFLAGS  = -axCORE-AVX512 -qopenmp -D_INFO -D_ASSERT -I../include -static-intel -static_mpi -O3 -ipo
+  NCFLAG  = -D_NETCDF
+  NCLIB   = -L/work/opt/local/x86_64/apps/intel/2021.2.0/netcdf-fortran/4.5.3/lib
+  NCINC   = -I/work/opt/local/x86_64/apps/intel/2021.2.0/netcdf-fortran/4.5.3/include
+  NETCDF  = -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
+
+  ifeq ($(debug),true)
+    FFLAGS  = -Wall -pedantic -fbounds-check -O -Wuninitialized \
+	          -ffpe-trap=invalid,zero,overflow -fbacktrace -O0 \
+	          -D_INFO -D_DEBUG -I../include
+  endif
+
+endif
