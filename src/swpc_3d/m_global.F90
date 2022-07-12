@@ -167,9 +167,13 @@ module m_global
   !! private variables
   !!
   real(MP), private, allocatable :: sbuf_ip(:), sbuf_im(:)          !<  mpi send buffer for x-dir
+  real(MP), private, allocatable :: sbuf_ip2(:), sbuf_im2(:)          !<  mpi send buffer for x-dir
   real(MP), private, allocatable :: sbuf_jp(:), sbuf_jm(:)          !<  mpi send buffer for y-dir
+  real(MP), private, allocatable :: sbuf_jp2(:), sbuf_jm2(:)          !<  mpi send buffer for y-dir
   real(MP), private, allocatable :: rbuf_ip(:), rbuf_im(:)          !<  mpi recv buffer for x-dir
+  real(MP), private, allocatable :: rbuf_ip2(:), rbuf_im2(:)          !<  mpi recv buffer for x-dir
   real(MP), private, allocatable :: rbuf_jp(:), rbuf_jm(:)          !<  mpi recv buffer for y-dir
+  real(MP), private, allocatable :: rbuf_jp2(:), rbuf_jm2(:)          !<  mpi recv buffer for y-dir
   integer :: mpi_precision
 
 
@@ -329,19 +333,31 @@ contains
 
     allocate( itbl(-1:nproc_x, -1:nproc_y) )
     allocate( sbuf_ip( nyp*nz*nl3 ), sbuf_im( nyp*nz*nl3 ) )
+    allocate( sbuf_ip2( nyp*nz*nl3 ), sbuf_im2( nyp*nz*nl3 ) )
     allocate( rbuf_ip( nyp*nz*nl3 ), rbuf_im( nyp*nz*nl3 ) )
+    allocate( rbuf_ip2( nyp*nz*nl3 ), rbuf_im2( nyp*nz*nl3 ) )
     allocate( sbuf_jp( nxp*nz*nl3 ), sbuf_jm( nxp*nz*nl3 ) )
+    allocate( sbuf_jp2( nxp*nz*nl3 ), sbuf_jm2( nxp*nz*nl3 ) )
     allocate( rbuf_jp( nxp*nz*nl3 ), rbuf_jm( nxp*nz*nl3 ) )
+    allocate( rbuf_jp2( nxp*nz*nl3 ), rbuf_jm2( nxp*nz*nl3 ) )
 
     !! initialize buffer
     sbuf_ip(:) = 0.0_MP
+    sbuf_ip2(:) = 0.0_MP
     sbuf_im(:) = 0.0_MP
+    sbuf_im2(:) = 0.0_MP
     rbuf_ip(:) = 0.0_MP
+    rbuf_ip2(:) = 0.0_MP
     rbuf_im(:) = 0.0_MP
+    rbuf_im2(:) = 0.0_MP
     sbuf_jp(:) = 0.0_MP
+    sbuf_jp2(:) = 0.0_MP
     sbuf_jm(:) = 0.0_MP
+    sbuf_jm2(:) = 0.0_MP
     rbuf_jp(:) = 0.0_MP
+    rbuf_jp2(:) = 0.0_MP
     rbuf_jm(:) = 0.0_MP
+    rbuf_jm2(:) = 0.0_MP
 
     !!
     !! MPI communication table
@@ -482,6 +498,7 @@ contains
     integer :: ireq1(4), ireq2(4)
     integer :: i, j, k, ptr
 
+
     if( myid >= nproc ) return
 
     call pwatch__on( "global__comm_vel" )
@@ -496,12 +513,13 @@ contains
     !! packing buffer: i-direction
     !!
     !!$omp parallel do private(j,k,ptr)
-    do concurrent(j=jbeg:jend) local(ptr, k)
+    do concurrent(j=jbeg:jend, k=kbeg: kend) local(ptr)
+    !do j=jbeg, jend
 #ifdef _ES
       !NEC$ ivdep
       !NEC$ nosync
 #endif
-      do concurrent(k=kbeg: kend)
+      !do k=kbeg, kend
         ptr = (k-kbeg)*Nsl + (j-jbeg)*Nsl*(kend-kbeg+1) + 1
 
         sbuf_ip(        ptr:        ptr+Nsl-1) = Vx(k,iend-Nsl+1:iend,j)
@@ -511,30 +529,40 @@ contains
         sbuf_im(        ptr:        ptr+Nsl-1) = Vx(k,ibeg:ibeg+Nsl-1,j)
         sbuf_im(  isize+ptr:  isize+ptr+Nsl-1) = Vy(k,ibeg:ibeg+Nsl-1,j)
         sbuf_im(2*isize+ptr:2*isize+ptr+Nsl-1) = Vz(k,ibeg:ibeg+Nsl-1,j)
-
-      end do
     end do
+
+#ifdef _NVHPC_STDPAR_GPU
+    sbuf_ip2(:) = sbuf_ip(:)
+    sbuf_im2(:) = sbuf_im(:)
     !!$omp end parallel do
 
     !!
     !! Issue send & receive orders: i-direction
     !!
+    call mpi_isend( sbuf_ip2, s_isize, mpi_precision, itbl(idx+1,idy), 1, mpi_comm_world, ireq1(1), ierr )
+    call mpi_isend( sbuf_im2, s_isize, mpi_precision, itbl(idx-1,idy), 2, mpi_comm_world, ireq1(2), ierr )
+    call mpi_irecv( rbuf_ip2, s_isize, mpi_precision, itbl(idx+1,idy), 2, mpi_comm_world, ireq1(3), ierr )
+    call mpi_irecv( rbuf_im2, s_isize, mpi_precision, itbl(idx-1,idy), 1, mpi_comm_world, ireq1(4), ierr )
+#else
     call mpi_isend( sbuf_ip, s_isize, mpi_precision, itbl(idx+1,idy), 1, mpi_comm_world, ireq1(1), ierr )
     call mpi_isend( sbuf_im, s_isize, mpi_precision, itbl(idx-1,idy), 2, mpi_comm_world, ireq1(2), ierr )
     call mpi_irecv( rbuf_ip, s_isize, mpi_precision, itbl(idx+1,idy), 2, mpi_comm_world, ireq1(3), ierr )
     call mpi_irecv( rbuf_im, s_isize, mpi_precision, itbl(idx-1,idy), 1, mpi_comm_world, ireq1(4), ierr )
+#endif
+
 
 
     !!
     !! packing buffer: j-direction
     !!
     !!$omp parallel do private(ptr)
-    do concurrent(i=ibeg:iend) local(ptr, k)
+    do concurrent(i=ibeg:iend, k=kbeg: kend) local(ptr)
+    !do i=ibeg, iend
 #ifdef _ES
       !NEC$ ivdep
       !NEC$ nosync
 #endif
-      do concurrent(k=kbeg:kend)
+    !  do k=kbeg, kend
         ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
 
         sbuf_jp(        ptr:        ptr+Nsl-1) = Vx(k,i,jend-Nsl+1:jend)
@@ -545,17 +573,18 @@ contains
         sbuf_jm(  jsize+ptr:  jsize+ptr+Nsl-1) = Vy(k,i,jbeg:jbeg+Nsl-1)
         sbuf_jm(2*jsize+ptr:2*jsize+ptr+Nsl-1) = Vz(k,i,jbeg:jbeg+Nsl-1)
 
-      end do
     end do
+    sbuf_jp2(:) = sbuf_jp(:)
+    sbuf_jm2(:) = sbuf_jm(:)
     !!$omp end parallel do
 
     !!
     !! Issue send & receive orders: j-direction
     !!
-    call mpi_isend( sbuf_jp, s_jsize, mpi_precision, itbl(idx,idy+1), 3, mpi_comm_world, ireq2(1), ierr )
-    call mpi_isend( sbuf_jm, s_jsize, mpi_precision, itbl(idx,idy-1), 4, mpi_comm_world, ireq2(2), ierr )
-    call mpi_irecv( rbuf_jp, s_jsize, mpi_precision, itbl(idx,idy+1), 4, mpi_comm_world, ireq2(3), ierr )
-    call mpi_irecv( rbuf_jm, s_jsize, mpi_precision, itbl(idx,idy-1), 3, mpi_comm_world, ireq2(4), ierr )
+    call mpi_isend( sbuf_jp2, s_jsize, mpi_precision, itbl(idx,idy+1), 3, mpi_comm_world, ireq2(1), ierr )
+    call mpi_isend( sbuf_jm2, s_jsize, mpi_precision, itbl(idx,idy-1), 4, mpi_comm_world, ireq2(2), ierr )
+    call mpi_irecv( rbuf_jp2, s_jsize, mpi_precision, itbl(idx,idy+1), 4, mpi_comm_world, ireq2(3), ierr )
+    call mpi_irecv( rbuf_jm2, s_jsize, mpi_precision, itbl(idx,idy-1), 3, mpi_comm_world, ireq2(4), ierr )
 
 
     !! Terminate mpi data communication
@@ -565,11 +594,17 @@ contains
     !! restoring the data: i-direction
     !!
     !!$omp parallel do private(ptr,i,j,k)
-    do concurrent(j=jbeg:jend, k=kbeg: kend) local(ptr, i)
+#ifdef _NVHPC_STDPAR_GPU
+    rbuf_ip(:) = rbuf_ip2(:)
+    rbuf_im(:) = rbuf_im2(:)
+#endif
+    do concurrent(j=jbeg:jend, k=kbeg: kend, i=1:Nsl) local(ptr)
+    !do j=jbeg, jend
+    !  do k=kbeg, kend
 
       ptr = ( (k-kbeg) + (j-jbeg)*nz ) * Nsl + 1
+    !  do i=1,Nsl
 
-      do concurrent(i=1:Nsl)
         Vx(k,iend+i,j) = rbuf_ip(        ptr+i-1)
         Vy(k,iend+i,j) = rbuf_ip(  isize+ptr+i-1)
         Vz(k,iend+i,j) = rbuf_ip(2*isize+ptr+i-1)
@@ -577,7 +612,6 @@ contains
         Vx(k,ibeg-Nsl+i-1,j) = rbuf_im(        ptr+i-1)
         Vy(k,ibeg-Nsl+i-1,j) = rbuf_im(  isize+ptr+i-1 )
         Vz(k,ibeg-Nsl+i-1,j) = rbuf_im(2*isize+ptr+i-1 )
-      end do
 
     end do
     !!$omp end parallel do
@@ -589,11 +623,15 @@ contains
     !! restoring the data: j-direction
     !!
     !!$omp parallel do private(ptr,i,j,k)
-    do concurrent(i=ibeg: iend, k=kbeg: kend) local(ptr, j)
+    rbuf_jp(:) = rbuf_jp2(:)
+    rbuf_jm(:) = rbuf_jm2(:)
+    do concurrent(i=ibeg:iend, k=kbeg: kend, j=1: Nsl) local(ptr)
+    !do i=ibeg,iend
+    !  do k=kbeg,kend
 
       ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
+    !  do j=1, Nsl
 
-      do concurrent(j=1: Nsl)
         Vx(k,i,jend+j) = rbuf_jp(ptr+j-1)
         Vy(k,i,jend+j) = rbuf_jp(jsize+ptr+j-1)
         Vz(k,i,jend+j) = rbuf_jp(2*jsize+ptr+j-1)
@@ -601,7 +639,6 @@ contains
         Vx(k,i,jbeg-Nsl+j-1) = rbuf_jm(ptr+j-1)
         Vy(k,i,jbeg-Nsl+j-1) = rbuf_jm(jsize+ptr+j-1)
         Vz(k,i,jbeg-Nsl+j-1) = rbuf_jm(2*jsize+ptr+j-1)
-      end do
 
     end do
     !!$omp end parallel do
@@ -638,12 +675,13 @@ contains
     !! packing buffer: i-direction ( Sxx, Sxy, Sxz )
     !!
     !!$omp parallel do private(i,k,ptr)
-    do concurrent(j=jbeg: jend) local(ptr, k)
+    do concurrent(j=jbeg:jend, k=kbeg: kend) local(ptr)
+    !do j=jbeg, jend
 #ifdef _ES
       !NEC$ ivdep
       !NEC$ nosync
 #endif
-      do concurrent(k=kbeg: kend)
+    !do k=kbeg, kend
         ptr = (k-kbeg)*Nsl + (j-jbeg)*Nsl*(kend-kbeg+1) + 1
 
         sbuf_ip(        ptr:        ptr+Nsl-1) = Sxx(k,iend-Nsl+1:iend,j)
@@ -654,29 +692,32 @@ contains
         sbuf_im(  isize+ptr:  isize+ptr+Nsl-1) = Sxy(k,ibeg:ibeg+Nsl-1,j)
         sbuf_im(2*isize+ptr:2*isize+ptr+Nsl-1) = Sxz(k,ibeg:ibeg+Nsl-1,j)
 
-      end do
     end do
+    sbuf_ip2(:) = sbuf_ip(:)
+    sbuf_im2(:) = sbuf_im(:)
     !!$omp end parallel do
 
     !!
     !! Issue send & receive orders; i-direction
     !!
     !! i-direction
-    call mpi_isend( sbuf_ip, s_isize, mpi_precision, itbl(idx+1,idy), 5, mpi_comm_world, ireq1(1), ierr )
-    call mpi_isend( sbuf_im, s_isize, mpi_precision, itbl(idx-1,idy), 6, mpi_comm_world, ireq1(2), ierr )
-    call mpi_irecv( rbuf_ip, s_isize, mpi_precision, itbl(idx+1,idy), 6, mpi_comm_world, ireq1(3), ierr )
-    call mpi_irecv( rbuf_im, s_isize, mpi_precision, itbl(idx-1,idy), 5, mpi_comm_world, ireq1(4), ierr )
+    call mpi_isend( sbuf_ip2, s_isize, mpi_precision, itbl(idx+1,idy), 5, mpi_comm_world, ireq1(1), ierr )
+    call mpi_isend( sbuf_im2, s_isize, mpi_precision, itbl(idx-1,idy), 6, mpi_comm_world, ireq1(2), ierr )
+    call mpi_irecv( rbuf_ip2, s_isize, mpi_precision, itbl(idx+1,idy), 6, mpi_comm_world, ireq1(3), ierr )
+    call mpi_irecv( rbuf_im2, s_isize, mpi_precision, itbl(idx-1,idy), 5, mpi_comm_world, ireq1(4), ierr )
 
     !!
     !! packing buffer: j-direction ( Syy, Syz, Sxy )
     !!
     !!!$omp parallel do private(ptr)
-    do concurrent(i=ibeg:iend) local(ptr, k)
+    do concurrent(i=ibeg:iend, k=kbeg: kend) local(ptr)
+    !do i=ibeg, iend
+
 #ifdef _ES
       !NEC$ ivdep
       !NEC$ nosync
 #endif
-      do concurrent(k=kbeg: kend)
+    !do k=kbeg, kend
         ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
 
         sbuf_jp(        ptr:        ptr+Nsl-1) = Syy(k,i,jend-Nsl+1:jend)
@@ -687,18 +728,19 @@ contains
         sbuf_jm(  jsize+ptr:  jsize+ptr+Nsl-1) = Syz(k,i,jbeg:jbeg+Nsl-1)
         sbuf_jm(2*jsize+ptr:2*jsize+ptr+Nsl-1) = Sxy(k,i,jbeg:jbeg+Nsl-1)
 
-      end do
     end do
+    sbuf_jp2(:) = sbuf_jp(:)
+    sbuf_jm2(:) = sbuf_jm(:)
     !!!$omp end parallel do
 
 
     !!
     !! Issue send & receive orders; j-direction
     !!
-    call mpi_isend( sbuf_jp, s_jsize, mpi_precision, itbl(idx,idy+1), 7, mpi_comm_world, ireq2(1), ierr )
-    call mpi_isend( sbuf_jm, s_jsize, mpi_precision, itbl(idx,idy-1), 8, mpi_comm_world, ireq2(2), ierr )
-    call mpi_irecv( rbuf_jp, s_jsize, mpi_precision, itbl(idx,idy+1), 8, mpi_comm_world, ireq2(3), ierr )
-    call mpi_irecv( rbuf_jm, s_jsize, mpi_precision, itbl(idx,idy-1), 7, mpi_comm_world, ireq2(4), ierr )
+    call mpi_isend( sbuf_jp2, s_jsize, mpi_precision, itbl(idx,idy+1), 7, mpi_comm_world, ireq2(1), ierr )
+    call mpi_isend( sbuf_jm2, s_jsize, mpi_precision, itbl(idx,idy-1), 8, mpi_comm_world, ireq2(2), ierr )
+    call mpi_irecv( rbuf_jp2, s_jsize, mpi_precision, itbl(idx,idy+1), 8, mpi_comm_world, ireq2(3), ierr )
+    call mpi_irecv( rbuf_jm2, s_jsize, mpi_precision, itbl(idx,idy-1), 7, mpi_comm_world, ireq2(4), ierr )
 
 
     !! Terminate mpi data communication
@@ -708,11 +750,14 @@ contains
     !! restore the data: i-direction
     !!
     !!$omp parallel do private(ptr,i,j,k)
-    do concurrent(j=jbeg:jend, k=kbeg: kend) local(ptr, i)
+    rbuf_ip(:) = rbuf_ip2(:)
+    rbuf_im(:) = rbuf_im2(:)
+    do concurrent(j=jbeg:jend, k=kbeg: kend, i=1:Nsl) local(ptr)
+    !do j=jbeg, jend
+    !  do k=kbeg, kend
 
-      ptr = (k-kbeg)*Nsl + (j-jbeg)*Nsl*(kend-kbeg+1) + 1
-
-      do concurrent(i=1: Nsl)
+      ptr = ( (k-kbeg) + (j-jbeg)*nz ) * Nsl + 1
+    !  do i=1,Nsl
 
         Sxx(k,iend+i,j) = rbuf_ip(        ptr+i-1)
         Sxy(k,iend+i,j) = rbuf_ip(  isize+ptr+i-1)
@@ -721,7 +766,6 @@ contains
         Sxx(k,ibeg-Nsl+i-1,j) = rbuf_im(       ptr+i-1)
         Sxy(k,ibeg-Nsl+i-1,j) = rbuf_im(  isize+ptr+i-1)
         Sxz(k,ibeg-Nsl+i-1,j) = rbuf_im(2*isize+ptr+i-1)
-      end do
 
     end do
     !!$omp end parallel do
@@ -734,11 +778,15 @@ contains
     !! restore the data: j-direction
     !!
     !!$omp parallel do private(ptr,i,j,k)
-    do concurrent(i=ibeg:iend, k=kbeg: kend) local(ptr, j)
+    rbuf_jp(:) = rbuf_jp2(:)
+    rbuf_jm(:) = rbuf_jm2(:)
+    do concurrent(i=ibeg:iend, k=kbeg: kend, j=1:Nsl) local(ptr)
+    !do i=ibeg,iend
+    !  do k=kbeg,kend
 
       ptr = (k-kbeg)*Nsl + (i-ibeg)*Nsl*(kend-kbeg+1) + 1
+    !  do j=1, Nsl
 
-      do concurrent(j=1: Nsl)
         Syy(k,i,jend+j) = rbuf_jp(        ptr+j-1)
         Syz(k,i,jend+j) = rbuf_jp(  jsize+ptr+j-1)
         Sxy(k,i,jend+j) = rbuf_jp(2*jsize+ptr+j-1)
@@ -746,7 +794,6 @@ contains
         Syy(k,i,jbeg-Nsl+j-1) = rbuf_jm(        ptr+j-1)
         Syz(k,i,jbeg-Nsl+j-1) = rbuf_jm(  jsize+ptr+j-1)
         Sxy(k,i,jbeg-Nsl+j-1) = rbuf_jm(2*jsize+ptr+j-1)
-      end do
 
     end do
     !!$omp end parallel do
