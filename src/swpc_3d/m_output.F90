@@ -1711,7 +1711,7 @@ contains
       i = i0_yz
 
       if( ibeg <= i .and. i <= iend ) then
-        !$omp parallel do private( k, j, kk, jj, div, rot )
+        !!$omp parallel do private( k, j, kk, jj, div, rot )
         do concurrent(jj=js0: js1, kk=ks0: ks1) local(k, j, div, rot)
           k = kk * kdec - kdec/2
           j = jj * jdec - jdec/2
@@ -1745,7 +1745,7 @@ contains
           buf(jj,kk,4) = rot(3) * UC * M0 * 1e-3
 
         end do
-        !$omp end parallel do
+        !!$omp end parallel do
       end if
 
       if( snp_format == 'native' ) then
@@ -1786,7 +1786,7 @@ contains
       j = j0_xz
 
       if( jbeg <= j .and. j <= jend ) then
-        !$omp parallel do private( ii, kk, i, k, div, rot )
+        !!$omp parallel do private( ii, kk, i, k, div, rot )
         do concurrent(ii=is0: is1, kk=ks0: ks1) local(i, k, div, rot)
           k = kk * kdec - kdec/2
           i = ii * idec - idec/2
@@ -1818,7 +1818,7 @@ contains
           buf(ii,kk,4) = rot(3)  * UC * M0 * 1e-3
 
         end do
-        !$omp end parallel do
+        !!$omp end parallel do
       end if
 
       if( snp_format == 'native' ) then
@@ -1857,7 +1857,7 @@ contains
     if( mod( it-1, ntdec_s ) == 0 ) then
 
       k = k0_xy
-      !$omp parallel do private( ii, jj, i, j, div, rot )
+      !!$omp parallel do private( ii, jj, i, j, div, rot )
       do concurrent(jj=js0: js1, ii=is0: is1) local(i, j, div, rot)
         j = jj * jdec - jdec/2
         i = ii * idec - idec/2
@@ -1889,7 +1889,7 @@ contains
         buf(ii,jj,4) = rot(3) * UC * M0 * 1e-3
 
       end do
-      !$omp end parallel do
+      !!$omp end parallel do
 
       if( snp_format == 'native' ) then
         call write_reduce_array2d_r( nxs, nys, xy_ps%ionode, xy_ps%io, buf(:,:,1) )
@@ -1925,7 +1925,7 @@ contains
 
     if( mod( it-1, ntdec_s ) == 0 ) then
 
-      !$omp parallel do private( ii, jj, i, j, k, div, rot )
+      !!$omp parallel do private( ii, jj, i, j, k, div, rot )
       do concurrent(jj=js0: js1, ii=is0: is1) local(i, j, k, div, rot)
         j = jj * jdec - jdec/2
         i = ii * idec - idec/2
@@ -1957,7 +1957,7 @@ contains
         buf(ii,jj,3) = rot(2) * UC * M0 * 1e-3
         buf(ii,jj,4) = rot(3) * UC * M0 * 1e-3
       end do
-      !$omp end parallel do
+      !!$omp end parallel do
 
       if( snp_format == 'native' ) then
         call write_reduce_array2d_r( nxs, nys, fs_ps%ionode, fs_ps%io, buf(:,:,1) )
@@ -1994,7 +1994,7 @@ contains
 
     if( mod( it-1, ntdec_s ) == 0 ) then
 
-      !$omp parallel do private( ii, jj, i, j, k, div, rot )
+      !!$omp parallel do private( ii, jj, i, j, k, div, rot )
       do concurrent(jj=js0: js1, ii=is0: is1) local(i, j, k, div, rot)
         j = jj * jdec - jdec/2
         i = ii * idec - idec/2
@@ -2027,7 +2027,7 @@ contains
         buf(ii,jj,4) = rot(3) * UC * M0 * 1e-3
 
       end do
-      !$omp end parallel do
+      !!$omp end parallel do
 
       if( snp_format == 'native' ) then
         call write_reduce_array2d_r( nxs, nys, ob_ps%ionode, ob_ps%io, buf(:,:,1) )
@@ -2062,7 +2062,7 @@ contains
 
     buf = 0.0
     if( ibeg <= i .and. i <= iend ) then
-      !$omp parallel do private( jj, kk, k, j )
+      !!$omp parallel do private( jj, kk, k, j )
       do concurrent(jj=js0: js1, kk=ks0: ks1) local(k, j)
         k = kk * kdec - kdec/2
         j = jj * jdec - jdec/2
@@ -2072,7 +2072,7 @@ contains
         buf(jj,kk,3) = Vz(k,i,j) * UC * M0
 
       end do
-      !$omp end parallel do
+      !!$omp end parallel do
 
     end if
 
@@ -2104,7 +2104,7 @@ contains
 
     buf = 0.0
     if( jbeg <= j .and. j <= jend ) then
-      !$omp parallel do private( ii, kk, i, k )
+      !!$omp parallel do private( ii, kk, i, k )
       do concurrent(ii=is0: is1, kk=ks0: ks1) local(i, k)
         k = kk * kdec - kdec/2
         i = ii * idec - idec/2
@@ -2114,7 +2114,7 @@ contains
         buf(ii,kk,3) = Vz(k,i,j) * UC * M0
 
       end do
-      !$omp end parallel do
+      !!$omp end parallel do
 
     end if
 
@@ -2145,7 +2145,7 @@ contains
     k = k0_xy
     buf = 0.0
 
-    !$omp parallel do private( ii, jj, i, j )
+    !!$omp parallel do private( ii, jj, i, j )
     do concurrent(jj=js0: js1, ii=is0: is1) local(i, j)
       j = jj * jdec - jdec/2
       i = ii * idec - idec/2
@@ -2155,7 +2155,7 @@ contains
       buf(ii,jj,3) = Vz(k,i,j) * UC * M0
 
     end do
-    !$omp end parallel do
+    !!$omp end parallel do
 
     if( snp_format == 'native' ) then
       call write_reduce_array2d_r( nxs, nys, xy_v%ionode, xy_v%io, buf(:,:,1) )
@@ -2181,7 +2181,7 @@ contains
     if( .not. allocated(buf) ) allocate(buf(nxs,nys,3))
     buf = 0.0
 
-    !$omp parallel do private( ii, jj, i, j, k )
+    !!$omp parallel do private( ii, jj, i, j, k )
     do concurrent(jj=js0: js1, ii=is0: is1) local(i, j, k)
       j = jj * jdec - jdec/2
       i = ii * idec - idec/2
@@ -2192,15 +2192,15 @@ contains
       buf(ii,jj,3) = Vz(k,i,j) * UC * M0
 
     end do
-    !$omp end parallel do
+    !!$omp end parallel do
 
-    !$omp parallel do private(ii,jj)
+    !!$omp parallel do private(ii,jj)
     do concurrent(jj=js0: js1, ii=is0: is1)
       max_fs_v(ii,jj,1) = max( max_fs_v(ii,jj,1), abs(buf(ii,jj,3)) )
       max_fs_v(ii,jj,2) = max( max_fs_v(ii,jj,2), sqrt( buf(ii,jj,1)**2 + buf(ii,jj,2)**2 ) )
       max_fs_v(ii,jj,3) = sqrt( max_fs_v(ii,jj,1)**2 + max_fs_v(ii,jj,2)**2 )
     end do
-    !$omp end parallel do
+    !!$omp end parallel do
 
     if( mod( it-1, ntdec_s ) /= 0 ) return
 
@@ -2230,7 +2230,7 @@ contains
 
     buf = 0.0
 
-    !$omp parallel do private( ii, jj, i, j, k )
+    !!$omp parallel do private( ii, jj, i, j, k )
     do concurrent(jj=js0: js1, ii=is0: is1) local(i, j, k)
       j = jj * jdec - jdec/2
       i = ii * idec - idec/2
@@ -2241,15 +2241,15 @@ contains
       buf(ii,jj,3) = Vz(k,i,j) * UC * M0
 
     end do
-    !$omp end parallel do
+    !!$omp end parallel do
 
-    !$omp parallel do private(ii,jj)
+    !!$omp parallel do private(ii,jj)
     do concurrent(jj=js0: js1, ii=is0: is1)
       max_ob_v(ii,jj,1) = max( max_ob_v(ii,jj,1), abs(buf(ii,jj,3)) )
       max_ob_v(ii,jj,2) = max( max_ob_v(ii,jj,2), sqrt( buf(ii,jj,1)**2 + buf(ii,jj,2)**2 ) )
       max_ob_v(ii,jj,3) = sqrt( max_ob_v(ii,jj,1)**2 + max_ob_v(ii,jj,2)**2 )
     end do
-    !$omp end parallel do
+    !!$omp end parallel do
     if( mod( it-1, ntdec_s ) /= 0 ) return
 
     if( snp_format == 'native' ) then
@@ -2276,7 +2276,7 @@ contains
     i = i0_yz
 
     if( ibeg <= i .and. i <= iend ) then
-      !$omp parallel do private( jj, kk, k, j )
+      !!$omp parallel do private( jj, kk, k, j )
       do concurrent(jj=js0: js1, kk=ks0: ks1) local(k, j)
         k = kk * kdec - kdec/2
         j = jj * jdec - jdec/2
@@ -2286,7 +2286,7 @@ contains
         buf_yz_u(jj,kk,3) = buf_yz_u(jj,kk,3) + Vz(k,i,j) * UC * M0 * dt
 
       end do
-      !$omp end parallel do
+      !!$omp end parallel do
 
     end if
 
@@ -2315,7 +2315,7 @@ contains
     j = j0_xz
 
     if( jbeg <= j .and. j <= jend ) then
-      !$omp parallel do private( ii, kk, i, k )
+      !!$omp parallel do private( ii, kk, i, k )
       do concurrent(ii=is0: is1, kk=ks0: ks1) local(i, k)
         k = kk * kdec - kdec/2
         i = ii * idec - idec/2
@@ -2325,7 +2325,7 @@ contains
         buf_xz_u(ii,kk,3) = buf_xz_u(ii,kk,3) + Vz(k,i,j) * UC * M0 * dt
 
       end do
-      !$omp end parallel do
+      !!$omp end parallel do
 
     end if
 
@@ -2355,7 +2355,7 @@ contains
 
     k = k0_xy
 
-    !$omp parallel do private( ii, jj, i, j )
+    !!$omp parallel do private( ii, jj, i, j )
     do concurrent(jj=js0: js1, ii=is0: is1) local(i, j)
       j = jj * jdec - jdec/2
       i = ii * idec - idec/2
@@ -2365,7 +2365,7 @@ contains
       buf_xy_u(ii,jj,3) = buf_xy_u(ii,jj,3) + Vz(k,i,j) * UC * M0 * dt
 
     end do
-    !$omp end parallel do
+    !!$omp end parallel do
 
     if( mod( it-1, ntdec_s ) == 0 ) then
 
@@ -2393,7 +2393,7 @@ contains
     integer :: ii, jj
 
 
-    !$omp parallel do private( ii, jj, i, j, k )
+    !!$omp parallel do private( ii, jj, i, j, k )
     do concurrent(jj=js0: js1, ii=is0: is1) local(i, j, k)
       j = jj * jdec - jdec/2
       i = ii * idec - idec/2
@@ -2404,15 +2404,15 @@ contains
       buf_fs_u(ii,jj,3) = buf_fs_u(ii,jj,3) + Vz(k,i,j) * UC * M0 * dt
 
     end do
-    !$omp end parallel do
+    !!$omp end parallel do
 
-    !$omp parallel do private(ii,jj)
+    !!$omp parallel do private(ii,jj)
     do concurrent(jj=js0: js1, ii=is0: is1)
       max_fs_u(ii,jj,1) = max( max_fs_u(ii,jj,1), abs(buf_fs_u(ii,jj,3)) )
       max_fs_u(ii,jj,2) = max( max_fs_u(ii,jj,2), sqrt( buf_fs_u(ii,jj,1)**2 + buf_fs_u(ii,jj,2)**2 ) )
       max_fs_u(ii,jj,3) = sqrt( max_fs_u(ii,jj,1)**2 + max_fs_u(ii,jj,2)**2 )
     end do
-    !$omp end parallel do
+    !!$omp end parallel do
 
     if( mod( it-1, ntdec_s ) == 0 ) then
       if( snp_format == 'native' ) then
@@ -2437,7 +2437,7 @@ contains
     integer :: i, j, k
     integer :: ii, jj
 
-    !$omp parallel do private( ii, jj, i, j, k )
+    !!$omp parallel do private( ii, jj, i, j, k )
     do concurrent(jj=js0: js1, ii=is0: is1) local(i, j, k)
       j = jj * jdec - jdec/2
       i = ii * idec - idec/2
@@ -2448,15 +2448,15 @@ contains
       buf_ob_u(ii,jj,3) = buf_ob_u(ii,jj,3) + Vz(k,i,j) * UC * M0 * dt
 
     end do
-    !$omp end parallel do
+    !!$omp end parallel do
 
-    !$omp parallel do private(ii,jj)
+    !!$omp parallel do private(ii,jj)
     do concurrent(jj=js0: js1, ii=is0: is1)
       max_ob_u(ii,jj,1) = max( max_ob_u(ii,jj,1), abs(buf_ob_u(ii,jj,3)) )
       max_ob_u(ii,jj,2) = max( max_ob_u(ii,jj,2), sqrt( buf_ob_u(ii,jj,1)**2 + buf_ob_u(ii,jj,2)**2 ) )
       max_ob_u(ii,jj,3) = sqrt( max_ob_u(ii,jj,1)**2 + max_ob_u(ii,jj,2)**2 )
     end do
-    !$omp end parallel do
+    !!$omp end parallel do
 
     if( mod( it-1, ntdec_s ) == 0 ) then
       if( snp_format == 'native' ) then
@@ -2510,18 +2510,18 @@ contains
 
     !! integrate waveform
     if( sw_wav_u ) then
-      !$omp parallel do private(i)
-      do i=1, nst
+      !!$omp parallel do private(i)
+      do concurrent(i=1:nst)
         ux(i) = ux(i) + ( Vx( kst(i), ist(i), jst(i) ) + Vx( kst(i),   ist(i)-1, jst(i)   ) ) * 0.5 * dt
         uy(i) = uy(i) + ( Vy( kst(i), ist(i), jst(i) ) + Vy( kst(i),   ist(i)  , jst(i)-1 ) ) * 0.5 * dt
         uz(i) = uz(i) - ( Vz( kst(i), ist(i), jst(i) ) + Vz( kst(i)-1, ist(i)  , jst(i)   ) ) * 0.5 * dt ! positive upward
       end do
-      !$omp end parallel do
+      !!$omp end parallel do
     end if
 
     if( sw_wav_strain ) then
-      !$omp parallel do private(i, ii, jj, kk, dxVx, dyVy, dzVz, dyVz, dzVy, dxVz, dzVx, dxVy, dyVx)
-      do i=1, nst
+      !!$omp parallel do private(i, ii, jj, kk, dxVx, dyVy, dzVz, dyVz, dzVy, dxVz, dzVx, dxVy, dyVx)
+      do concurrent(i=1:nst)
         ii = ist(i)
         jj = jst(i)
         kk = kst(i)
@@ -2568,7 +2568,7 @@ contains
         exy(i) = exy(i) + (dxVy + dyVx) * 0.5 * dt
 
       end do
-      !$omp end parallel do
+      !!$omp end parallel do
 
     end if
 
@@ -2577,28 +2577,28 @@ contains
     if( mod( it-1, ntdec_w ) == 0 ) then
       itw = (it-1)/ntdec_w + 1
       if( sw_wav_v ) then
-        !$omp parallel do private(i)
-        do i=1, nst
+        !!$omp parallel do private(i)
+        do concurrent(i=1:nst)
           wav_vel(itw,1,i) =  ( Vx( kst(i), ist(i), jst(i) ) + Vx( kst(i)  , ist(i)-1, jst(i)   ) )*0.5 * M0 * UC * 1e9 !! [nm/s]
           wav_vel(itw,2,i) =  ( Vy( kst(i), ist(i), jst(i) ) + Vy( kst(i)  , ist(i)  , jst(i)-1 ) )*0.5 * M0 * UC * 1e9 !! [nm/s]
           wav_vel(itw,3,i) = -( Vz( kst(i), ist(i), jst(i) ) + Vz( kst(i)-1, ist(i)  , jst(i)   ) )*0.5 * M0 * UC * 1e9 !! [nm/s]
         end do
-        !$omp end parallel do
+        !!$omp end parallel do
       end if
 
       if( sw_wav_u ) then
-        !$omp parallel do private(i)
-        do i=1, nst
+        !!$omp parallel do private(i)
+        do concurrent(i=1:nst)
           wav_disp(itw,1,i) = ux(i) * M0 * UC * 1e9                          !! [nm]
           wav_disp(itw,2,i) = uy(i) * M0 * UC * 1e9                          !! [nm]
           wav_disp(itw,3,i) = uz(i) * M0 * UC * 1e9                          !! [nm]
         end do
-        !$omp end parallel do
+        !!$omp end parallel do
       end if
 
       if( sw_wav_stress ) then
-        !$omp parallel do private(i)
-        do i=1, nst
+        !!$omp parallel do private(i)
+        do concurrent(i=1:nst)
           wav_stress(itw,1,i) = Sxx(kst(i), ist(i), jst(i)) * M0 * UC * 1e6
           wav_stress(itw,2,i) = Syy(kst(i), ist(i), jst(i)) * M0 * UC * 1e6
           wav_stress(itw,3,i) = Szz(kst(i), ist(i), jst(i)) * M0 * UC * 1e6
@@ -2609,12 +2609,12 @@ contains
           wav_stress(itw,6,i) = ( Sxy(kst(i), ist(i),   jst(i)) + Sxy(kst(i), ist(i),   jst(i)-1)  &
                                 + Sxy(kst(i), ist(i)-1, jst(i)) + Sxy(kst(i), ist(i)-1, jst(i)-1) ) * 0.25 * M0 * UC * 1e6
         end do
-        !$omp end parallel do
+        !!$omp end parallel do
       end if
 
       if( sw_wav_strain ) then
-        !$omp parallel do private(i)
-        do i=1, nst
+        !!$omp parallel do private(i)
+        do concurrent(i=1:nst)
           wav_strain(itw,1,i) = exx(i) * M0 * UC * 1e-3
           wav_strain(itw,2,i) = eyy(i) * M0 * UC * 1e-3
           wav_strain(itw,3,i) = ezz(i) * M0 * UC * 1e-3
@@ -2622,7 +2622,7 @@ contains
           wav_strain(itw,5,i) = exz(i) * M0 * UC * 1e-3
           wav_strain(itw,6,i) = exy(i) * M0 * UC * 1e-3
         end do
-        !$omp end parallel do
+        !!$omp end parallel do
       end if
 
 

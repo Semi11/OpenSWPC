@@ -413,12 +413,10 @@ contains
     zmax = 0.0
 
     !! avoid nearby the absorbing boundary
-    do j=max(na+margin+1,jbeg_k), min(ny-na-margin, jend_k)
-      do i=max(na+margin+1,ibeg_k), min(ny-na-margin, iend_k)
-        xmax = max( xmax, real( abs( vx(kob(i,j)+1,i,j) ) ) )
-        ymax = max( ymax, real( abs( vy(kob(i,j)+1,i,j) ) ) )
-        zmax = max( zmax, real( abs( vz(kob(i,j)+1,i,j) ) ) )
-      end do
+    do concurrent(j=max(na+margin+1,jbeg_k): min(ny-na-margin, jend_k), i=max(na+margin+1,ibeg_k): min(ny-na-margin, iend_k))
+      xmax = max( xmax, real( abs( vx(kob(i,j)+1,i,j) ) ) )
+      ymax = max( ymax, real( abs( vy(kob(i,j)+1,i,j) ) ) )
+      zmax = max( zmax, real( abs( vz(kob(i,j)+1,i,j) ) ) )
     end do
 
   end subroutine kernel__vmax
