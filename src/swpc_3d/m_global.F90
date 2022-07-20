@@ -531,7 +531,7 @@ contains
         sbuf_im(2*isize+ptr:2*isize+ptr+Nsl-1) = Vz(k,ibeg:ibeg+Nsl-1,j)
     end do
 
-#ifdef _NVHPC_STDPAR_GPU
+#ifdef _SAFE_MPI
     sbuf_ip2(:) = sbuf_ip(:)
     sbuf_im2(:) = sbuf_im(:)
     !!$omp end parallel do
@@ -574,6 +574,8 @@ contains
         sbuf_jm(2*jsize+ptr:2*jsize+ptr+Nsl-1) = Vz(k,i,jbeg:jbeg+Nsl-1)
 
     end do
+
+#ifdef _SAFE_MPI
     sbuf_jp2(:) = sbuf_jp(:)
     sbuf_jm2(:) = sbuf_jm(:)
     !!$omp end parallel do
@@ -585,6 +587,13 @@ contains
     call mpi_isend( sbuf_jm2, s_jsize, mpi_precision, itbl(idx,idy-1), 4, mpi_comm_world, ireq2(2), ierr )
     call mpi_irecv( rbuf_jp2, s_jsize, mpi_precision, itbl(idx,idy+1), 4, mpi_comm_world, ireq2(3), ierr )
     call mpi_irecv( rbuf_jm2, s_jsize, mpi_precision, itbl(idx,idy-1), 3, mpi_comm_world, ireq2(4), ierr )
+#else
+    call mpi_isend( sbuf_jp, s_jsize, mpi_precision, itbl(idx,idy+1), 3, mpi_comm_world, ireq2(1), ierr )
+    call mpi_isend( sbuf_jm, s_jsize, mpi_precision, itbl(idx,idy-1), 4, mpi_comm_world, ireq2(2), ierr )
+    call mpi_irecv( rbuf_jp, s_jsize, mpi_precision, itbl(idx,idy+1), 4, mpi_comm_world, ireq2(3), ierr )
+    call mpi_irecv( rbuf_jm, s_jsize, mpi_precision, itbl(idx,idy-1), 3, mpi_comm_world, ireq2(4), ierr )
+#endif
+
 
 
     !! Terminate mpi data communication
@@ -594,7 +603,7 @@ contains
     !! restoring the data: i-direction
     !!
     !!$omp parallel do private(ptr,i,j,k)
-#ifdef _NVHPC_STDPAR_GPU
+#ifdef _SAFE_MPI
     rbuf_ip(:) = rbuf_ip2(:)
     rbuf_im(:) = rbuf_im2(:)
 #endif
@@ -623,8 +632,10 @@ contains
     !! restoring the data: j-direction
     !!
     !!$omp parallel do private(ptr,i,j,k)
+#ifdef _SAFE_MPI
     rbuf_jp(:) = rbuf_jp2(:)
     rbuf_jm(:) = rbuf_jm2(:)
+#endif
     do concurrent(i=ibeg:iend, k=kbeg: kend, j=1: Nsl) local(ptr)
     !do i=ibeg,iend
     !  do k=kbeg,kend
@@ -693,6 +704,7 @@ contains
         sbuf_im(2*isize+ptr:2*isize+ptr+Nsl-1) = Sxz(k,ibeg:ibeg+Nsl-1,j)
 
     end do
+#ifdef _SAFE_MPI
     sbuf_ip2(:) = sbuf_ip(:)
     sbuf_im2(:) = sbuf_im(:)
     !!$omp end parallel do
@@ -705,6 +717,12 @@ contains
     call mpi_isend( sbuf_im2, s_isize, mpi_precision, itbl(idx-1,idy), 6, mpi_comm_world, ireq1(2), ierr )
     call mpi_irecv( rbuf_ip2, s_isize, mpi_precision, itbl(idx+1,idy), 6, mpi_comm_world, ireq1(3), ierr )
     call mpi_irecv( rbuf_im2, s_isize, mpi_precision, itbl(idx-1,idy), 5, mpi_comm_world, ireq1(4), ierr )
+#else
+    call mpi_isend( sbuf_ip, s_isize, mpi_precision, itbl(idx+1,idy), 5, mpi_comm_world, ireq1(1), ierr )
+    call mpi_isend( sbuf_im, s_isize, mpi_precision, itbl(idx-1,idy), 6, mpi_comm_world, ireq1(2), ierr )
+    call mpi_irecv( rbuf_ip, s_isize, mpi_precision, itbl(idx+1,idy), 6, mpi_comm_world, ireq1(3), ierr )
+    call mpi_irecv( rbuf_im, s_isize, mpi_precision, itbl(idx-1,idy), 5, mpi_comm_world, ireq1(4), ierr )
+#endif
 
     !!
     !! packing buffer: j-direction ( Syy, Syz, Sxy )
@@ -729,6 +747,7 @@ contains
         sbuf_jm(2*jsize+ptr:2*jsize+ptr+Nsl-1) = Sxy(k,i,jbeg:jbeg+Nsl-1)
 
     end do
+#ifdef _SAFE_MPI
     sbuf_jp2(:) = sbuf_jp(:)
     sbuf_jm2(:) = sbuf_jm(:)
     !!!$omp end parallel do
@@ -741,6 +760,12 @@ contains
     call mpi_isend( sbuf_jm2, s_jsize, mpi_precision, itbl(idx,idy-1), 8, mpi_comm_world, ireq2(2), ierr )
     call mpi_irecv( rbuf_jp2, s_jsize, mpi_precision, itbl(idx,idy+1), 8, mpi_comm_world, ireq2(3), ierr )
     call mpi_irecv( rbuf_jm2, s_jsize, mpi_precision, itbl(idx,idy-1), 7, mpi_comm_world, ireq2(4), ierr )
+#else
+    call mpi_isend( sbuf_jp, s_jsize, mpi_precision, itbl(idx,idy+1), 7, mpi_comm_world, ireq2(1), ierr )
+    call mpi_isend( sbuf_jm, s_jsize, mpi_precision, itbl(idx,idy-1), 8, mpi_comm_world, ireq2(2), ierr )
+    call mpi_irecv( rbuf_jp, s_jsize, mpi_precision, itbl(idx,idy+1), 8, mpi_comm_world, ireq2(3), ierr )
+    call mpi_irecv( rbuf_jm, s_jsize, mpi_precision, itbl(idx,idy-1), 7, mpi_comm_world, ireq2(4), ierr )
+#endif
 
 
     !! Terminate mpi data communication
@@ -750,8 +775,10 @@ contains
     !! restore the data: i-direction
     !!
     !!$omp parallel do private(ptr,i,j,k)
+#ifdef _SAFE_MPI
     rbuf_ip(:) = rbuf_ip2(:)
     rbuf_im(:) = rbuf_im2(:)
+#endif
     do concurrent(j=jbeg:jend, k=kbeg: kend, i=1:Nsl) local(ptr)
     !do j=jbeg, jend
     !  do k=kbeg, kend
@@ -778,8 +805,10 @@ contains
     !! restore the data: j-direction
     !!
     !!$omp parallel do private(ptr,i,j,k)
+#ifdef _SAFE_MPI
     rbuf_jp(:) = rbuf_jp2(:)
     rbuf_jm(:) = rbuf_jm2(:)
+#endif
     do concurrent(i=ibeg:iend, k=kbeg: kend, j=1:Nsl) local(ptr)
     !do i=ibeg,iend
     !  do k=kbeg,kend
