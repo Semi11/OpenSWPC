@@ -203,7 +203,7 @@ endif
 ifeq ($(arch),bdec-a)
 
   FC      = mpif90
-  FFLAGS  = -O3 -D_INFO -I../include -stdpar=gpu -Minfo -Mneginfo -fast
+  FFLAGS  = -O3 -D_INFO -I../include -stdpar=gpu -Minfo -Mneginfo -fast -mp
   NCFLAG  = -D_NETCDF
   NCLIB   = -L$(HOME)/.local/netcdf-fortran-4.5.2/lib
   NCINC   = -I$(HOME)/.local/netcdf-fortran-4.5.2/include
